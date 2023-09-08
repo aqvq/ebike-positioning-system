@@ -43,22 +43,54 @@
         "user/mc3630",
         "user/partition/ymodem.c"
       ],
-      "toolchain": "GCC",
+      "toolchain": "AC6",
       "compileConfig": {
-        "cpuType": "Cortex-M4",
-        "floatingPointHardware": "single",
-        "scatterFilePath": "APP1.ld",
-        "useCustomScatterFile": true,
+        "cpuType": "Cortex-M0+",
+        "floatingPointHardware": "none",
+        "useCustomScatterFile": false,
+        "scatterFilePath": "<YOUR_SCATTER_FILE>.sct",
         "storageLayout": {
-          "RAM": [],
-          "ROM": []
+          "RAM": [
+            {
+              "tag": "IRAM",
+              "id": 1,
+              "mem": {
+                "startAddr": "0x20000000",
+                "size": "0x24000"
+              },
+              "isChecked": true,
+              "noInit": false
+            }
+          ],
+          "ROM": [
+            {
+              "tag": "IROM",
+              "id": 1,
+              "mem": {
+                "startAddr": "0x08003000",
+                "size": "0x3E800"
+              },
+              "isChecked": true,
+              "isStartup": true
+            },
+            {
+              "tag": "IROM",
+              "id": 2,
+              "mem": {
+                "startAddr": "0x08041800",
+                "size": "0x3E800"
+              },
+              "isChecked": true,
+              "isStartup": false
+            }
+          ]
         },
         "options": "null"
       },
       "uploader": "OpenOCD",
       "uploadConfig": {
         "bin": "",
-        "target": "stm32f4x",
+        "target": "stm32g0x",
         "interface": "cmsis-dap",
         "baseAddr": "0x08000000"
       },
