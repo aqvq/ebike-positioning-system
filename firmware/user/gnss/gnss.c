@@ -2,9 +2,9 @@
 #include <string.h>
 #include "FreeRTOS.h"
 #include "task.h"
-#include "4g/at_api.h"
+#include "bsp/4g/at_api.h"
 #include "aiot_state_api.h"
-#include "4g/hal_adapter.h"
+#include "bsp/4g/hal_adapter.h"
 #include "utils/linked_list.h"
 #include "log/log.h"
 #include "utils/util.h"

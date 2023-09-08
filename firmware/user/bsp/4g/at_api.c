@@ -16,7 +16,7 @@
 #include "core_string.h"
 #include "aiot_state_api.h"
 #include "aiot_sysdep_api.h"
-#include "4g/at_api.h"
+#include "at_api.h"
 #include "core_log.h"
 #include "os_net_interface.h"
 #include <string.h>

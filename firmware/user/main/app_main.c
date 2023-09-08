@@ -19,14 +19,14 @@
 #include "cJSON.h"
 #include "storage/storage.h"
 #include "protocol/iot/iot_helper.h"
-#include "4g/at_api.h"
-#include "4g/hal_adapter.h"
+#include "bsp/4g/at_api.h"
+#include "bsp/4g/hal_adapter.h"
 #include "app_main.h"
 #include "protocol/uart/uart_gateway_config.h"
 #include "gnss/gnss.h"
 #include "utils/util.h"
 #include "error_type.h"
-#include "storage/device/hg24c64.h"
+#include "bsp/eeprom/at24c64.h"
 
 static const char *TAG = "MAIN";
 volatile uint32_t ulHighFrequencyTimerTicks;
@@ -141,9 +141,9 @@ void app_main(void)
     storage_interface.storage_init_func       = NULL;
 #endif
     storage_interface.storage_base_address    = 0x00;
-    storage_interface.storage_read_data_func  = Storage_Read_Buffer;
-    storage_interface.storage_write_data_func = Storage_Write_Buffer;
-    storage_interface.storage_init_func       = Storage_Ready;
+    storage_interface.storage_read_data_func  = bsp_eeprom_read_buffer;
+    storage_interface.storage_write_data_func = bsp_eeprom_write_buffer;
+    storage_interface.storage_init_func       = bsp_eeprom_check;
 
     err = storage_install_interface(&storage_interface);
     if (err != OK) {

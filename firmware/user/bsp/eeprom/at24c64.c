@@ -1,22 +1,22 @@
-
+#include "at24c64.h"
 #include "storage_iic.h"
-#include "hg24c64.h"
 #include "error_type.h"
 #include "utils/macros.h"
-#define TAG "HG24C64"
+#include "main.h"
+#define TAG "AT24C64"
 
-uint8_t Storage_Ready(void)
+error_t bsp_eeprom_check(void)
 {
     storage_iic_start();
     storage_iic_send_byte(STORAGE_DEVICE);
     uint8_t ack = storage_iic_receive_ack();
     storage_iic_stop();
-    return ack;
+    return ((ack == 0) ? OK : EEPROM_CHECK_ERROR); // normally should be OK
 }
 
-void Storage_Write(uint16_t address, uint8_t data)
+static void bsp_eeprom_write(uint16_t address, uint8_t data)
 {
-    while (Storage_Ready())
+    while (bsp_eeprom_check() != OK)
         ;
 
     uint8_t res = 1;
@@ -36,9 +36,9 @@ void Storage_Write(uint16_t address, uint8_t data)
     if (res) printf("Error in Storage_Write\n");
     storage_iic_stop();
 }
-uint8_t Storage_Read(uint16_t address)
+static uint8_t bsp_eeprom_read(uint16_t address)
 {
-    while (Storage_Ready())
+    while (bsp_eeprom_check() != OK)
         ;
 
     uint8_t res = 1;
@@ -63,10 +63,10 @@ uint8_t Storage_Read(uint16_t address)
     return ret;
 }
 
-void Storage_Write_Page(uint16_t addr, uint8_t *data, uint8_t len)
+static void bsp_eeprom_write_page(uint16_t addr, uint8_t *data, uint8_t len)
 {
     if (len == 0 || len > 32) return;
-    while (Storage_Ready())
+    while (bsp_eeprom_check() != OK)
         ;
     uint8_t res = 1;
     storage_iic_start();
@@ -88,10 +88,10 @@ void Storage_Write_Page(uint16_t addr, uint8_t *data, uint8_t len)
     storage_iic_stop();
 }
 
-void Storage_Read_Page(uint16_t addr, uint8_t *buffer, uint8_t len)
+static void bsp_eeprom_read_page(uint16_t addr, uint8_t *buffer, uint8_t len)
 {
     if (len == 0 || len > 32) return;
-    while (Storage_Ready())
+    while (bsp_eeprom_check() != OK)
         ;
 
     uint8_t res = 1;
@@ -120,46 +120,44 @@ void Storage_Read_Page(uint16_t addr, uint8_t *buffer, uint8_t len)
     storage_iic_stop();
 }
 
-#define roundup(x, y) ((((x) + ((y)-1)) / (y)) * (y))
-
-error_t Storage_Write_Buffer(uint16_t addr, uint8_t *buffer, uint16_t len)
+error_t bsp_eeprom_write_buffer(uint16_t addr, uint8_t *buffer, uint16_t len)
 {
     uint16_t end_addr  = addr + len;
     uint16_t next_addr = roundup(addr, 32);
     assert(next_addr % 32 == 0);
     if (next_addr < end_addr) {
-        Storage_Write_Page(addr, buffer, next_addr - addr);
+        bsp_eeprom_write_page(addr, buffer, next_addr - addr);
         buffer += (next_addr - addr);
         addr = next_addr;
         while (addr < end_addr) {
-            Storage_Write_Page(addr, buffer, ((end_addr - addr > 32) ? 32 : (end_addr - addr)));
+            bsp_eeprom_write_page(addr, buffer, ((end_addr - addr > 32) ? 32 : (end_addr - addr)));
             addr += 32;
             buffer += 32;
         }
     } else {
         assert(len <= 32);
-        Storage_Write_Page(addr, buffer, len);
+        bsp_eeprom_write_page(addr, buffer, len);
     }
     return OK;
 }
 
-error_t Storage_Read_Buffer(uint16_t addr, uint8_t *buffer, uint16_t len)
+error_t bsp_eeprom_read_buffer(uint16_t addr, uint8_t *buffer, uint16_t len)
 {
     uint16_t end_addr  = addr + len;
     uint16_t next_addr = roundup(addr, 32);
     assert(next_addr % 32 == 0);
     if (next_addr < end_addr) {
-        Storage_Read_Page(addr, buffer, next_addr - addr);
+        bsp_eeprom_read_page(addr, buffer, next_addr - addr);
         buffer += (next_addr - addr);
         addr = next_addr;
         while (addr < end_addr) {
-            Storage_Read_Page(addr, buffer, ((end_addr - addr > 32) ? 32 : (end_addr - addr)));
+            bsp_eeprom_read_page(addr, buffer, ((end_addr - addr > 32) ? 32 : (end_addr - addr)));
             addr += 32;
             buffer += 32;
         }
     } else {
         assert(len <= 32);
-        Storage_Read_Page(addr, buffer, len);
+        bsp_eeprom_read_page(addr, buffer, len);
     }
     return OK;
 }

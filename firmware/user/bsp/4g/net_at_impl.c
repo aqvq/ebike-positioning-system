@@ -12,7 +12,7 @@
 #include "aiot_state_api.h"
 #include "aiot_sysdep_api.h"
 #include "os_net_interface.h"
-#include "4g/at_api.h"
+#include "at_api.h"
 
 /**
  * @brief 建立1个网络会话, 作为MQTT/HTTP等协议的底层承载

@@ -34,8 +34,9 @@
                    error(FLASH_ERASE_ERROR),              \
                    error(FLASH_WRITE_ERROR),              \
                    error(STORAGE_NO_DATA),                \
-                   error(BLE_UNKNOWN_DATA),\
-                   error(ERROR_CJSON_PARSE)
+                   error(BLE_UNKNOWN_DATA),               \
+                   error(ERROR_CJSON_PARSE),              \
+                   error(EEPROM_CHECK_ERROR)
 
 // 定义NULL
 #ifndef NULL

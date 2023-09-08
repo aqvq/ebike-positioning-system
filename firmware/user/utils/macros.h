@@ -16,11 +16,9 @@
     const typeof(((type *)0)->member) *__mptr = (ptr); \
     (type *)((char *)__mptr - offsetof(type, member)); \
 })
-#define roundup(x, y) (                  \
-    {                                    \
-        typeof(y) __y = y;               \
-        (((x) + (__y - 1)) / __y) * __y; \
-    })
+
+#define roundup(x, y) ((((x) + ((y) - 1)) / (y)) * (y))
+
 #define assert(x)                                         \
     do {                                                  \
         if (!(x)) LOGE(TAG, "Assertion Failure: %s", #x); \

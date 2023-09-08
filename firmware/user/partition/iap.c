@@ -15,11 +15,10 @@
 #include "task.h"
 #include "stream_buffer.h"
 #include "error_type.h"
-#include "flash.h"
+#include "bsp/flash/flash.h"
 #include "log/log.h"
 #include "storage/storage.h"
 #include "iap.h"
-#include "flash.h"
 #include "partition_info.h"
 
 #define TAG                "UPDATE"

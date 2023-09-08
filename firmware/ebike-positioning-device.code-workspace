@@ -25,7 +25,8 @@
             "compare": "c",
             "tuple": "c",
             "type_traits": "c",
-            "string_view": "c"
+            "string_view": "c",
+            "limits": "c"
         },
         "[yaml]": {
             "editor.insertSpaces": true,

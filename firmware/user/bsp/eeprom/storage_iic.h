@@ -2,14 +2,14 @@
 #ifndef __IIC_H
 #define __IIC_H
 #include "main.h"
-#include "utils/Delay.h"
+#include "bsp/utils/Delay.h"
 
 // 软件IIC SDA引脚
-#define IIC_SDA_PIN GPIOB, GPIO_PIN_11
+#define IIC_SDA_PIN GPIOA, GPIO_PIN_10
 // 软件IIC SCL引脚
-#define IIC_SCL_PIN GPIOB, GPIO_PIN_10
+#define IIC_SCL_PIN GPIOA, GPIO_PIN_9
 // IIC SCL每个电平延时时间
-#define IIC_DELAY 2
+#define IIC_DELAY (2)
 
 // iic初始化
 void storage_iic_init(void);

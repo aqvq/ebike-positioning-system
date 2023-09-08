@@ -2,7 +2,7 @@
 #ifndef _GNSS_H_
 #define _GNSS_H_
 
-#include "4g/at_api.h"
+#include "bsp/4g/at_api.h"
 #include "minmea.h"
 #include "FreeRTOS.h"
 #include "queue.h"
