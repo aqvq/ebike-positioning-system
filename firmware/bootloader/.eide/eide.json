@@ -11,17 +11,7 @@
   "virtualFolder": {
     "name": "<virtual_root>",
     "files": [],
-    "folders": [
-      {
-        "name": "startup",
-        "files": [
-          {
-            "path": "startup.s"
-          }
-        ],
-        "folders": []
-      }
-    ]
+    "folders": []
   },
   "outDir": "build",
   "deviceName": null,
@@ -35,24 +25,47 @@
         "Src/storage.c",
         "<virtual_root>/startup/startup_stm32f407xx.s",
         "Src/ymodem.c",
-        "Drivers/w25qxx"
+        "Drivers/w25qxx",
+        "Drivers/RTE/system_stm32g0xx.c"
       ],
-      "toolchain": "GCC",
+      "toolchain": "AC6",
       "compileConfig": {
-        "cpuType": "Cortex-M4",
-        "floatingPointHardware": "single",
-        "scatterFilePath": "FLASH.ld",
-        "useCustomScatterFile": true,
+        "cpuType": "Cortex-M0+",
+        "floatingPointHardware": "none",
+        "useCustomScatterFile": false,
+        "scatterFilePath": "<YOUR_SCATTER_FILE>.sct",
         "storageLayout": {
-          "RAM": [],
-          "ROM": []
+          "RAM": [
+            {
+              "tag": "IRAM",
+              "id": 1,
+              "mem": {
+                "startAddr": "0x20000000",
+                "size": "0x24000"
+              },
+              "isChecked": true,
+              "noInit": false
+            }
+          ],
+          "ROM": [
+            {
+              "tag": "IROM",
+              "id": 1,
+              "mem": {
+                "startAddr": "0x08000000",
+                "size": "0x3000"
+              },
+              "isChecked": true,
+              "isStartup": true
+            }
+          ]
         },
         "options": "null"
       },
       "uploader": "OpenOCD",
       "uploadConfig": {
         "bin": "",
-        "target": "stm32f4x",
+        "target": "stm32g0x",
         "interface": "cmsis-dap",
         "baseAddr": "0x08000000"
       },
@@ -87,18 +100,17 @@
         "incList": [
           ".eide/deps",
           "Drivers/CMSIS/Include",
-          "Drivers/CMSIS/Device/ST/STM32F4xx/Include",
-          "Drivers/STM32F4xx_HAL_Driver/Inc",
-          "Drivers/STM32F4xx_HAL_Driver/Inc/Legacy",
           "Inc",
-          "Drivers/w25qxx/interface",
-          "Drivers/w25qxx/src",
-          "Drivers/hg24c64"
+          "Drivers/hg24c64",
+          "Drivers/STM32G0xx_HAL_Driver/Inc",
+          "Drivers/STM32G0xx_HAL_Driver/Inc/Legacy",
+          "Drivers/CMSIS/Device/ST/STM32G0xx/Include"
         ],
         "libList": [],
         "sourceDirList": [],
         "defineList": [
-          "STM32F407xx"
+          "STM32G0B0xx",
+          "DEBUG"
         ]
       }
     }

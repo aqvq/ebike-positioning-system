@@ -1,0 +1,158 @@
+{
+  "name": "app",
+  "type": "ARM",
+  "dependenceList": [],
+  "srcDirs": [
+    ".eide/deps",
+    "user",
+    "libraries"
+  ],
+  "virtualFolder": {
+    "name": "<virtual_root>",
+    "files": [],
+    "folders": []
+  },
+  "outDir": "build",
+  "deviceName": null,
+  "packDir": null,
+  "miscInfo": {
+    "uid": "2f0e8813a1b8ec2ed90f744ed6070897"
+  },
+  "targets": {
+    "Flash": {
+      "excludeList": [
+        "libraries/EasyLogger/plugins",
+        "user/protocol/aliyun/gateway_message.pb.c",
+        "libraries/FreeRTOS/heap_4.c",
+        "libraries/w25qxx/example",
+        "user/main/system_monitor.c",
+        "libraries/LinkSDk/portfiles/aiot_port/at/module/air724_ssl.c",
+        "libraries/LinkSDk/portfiles/aiot_port/at/module/air724_tcp.c",
+        "libraries/LinkSDk/portfiles/aiot_port/at/module/fibcom_l610_ssl.c",
+        "libraries/LinkSDk/portfiles/aiot_port/at/module/fibcom_l610_tcp.c",
+        "libraries/LinkSDk/portfiles/aiot_port/at/module/quectel_ec200s_ssl.c",
+        "user/diagnosis",
+        "user/can/mcp2515.c",
+        "user/can/can_spi.c",
+        "user/protocol/can_screen/can_dongfeng_bus_protocol.c",
+        "user/storage/device/flash.c",
+        "user/storage/data_template.c",
+        "user/protocol/zhilun",
+        "user/protocol/faw",
+        "user/load",
+        "user/mc3630",
+        "user/partition/ymodem.c",
+        "libraries/STM32G0B0RETx/startup_stm32g0b0xx.s",
+        "libraries/STM32G0B0RETx/Drivers/RTE/system_stm32g0xx.c",
+        "libraries/FreeRTOS/portable/heap_1.c",
+        "libraries/FreeRTOS/portable/heap_2.c",
+        "libraries/FreeRTOS/portable/heap_3.c",
+        "libraries/FreeRTOS/portable/heap_4.c"
+      ],
+      "toolchain": "AC6",
+      "compileConfig": {
+        "cpuType": "Cortex-M0+",
+        "floatingPointHardware": "none",
+        "useCustomScatterFile": false,
+        "scatterFilePath": "<YOUR_SCATTER_FILE>.sct",
+        "storageLayout": {
+          "RAM": [
+            {
+              "tag": "IRAM",
+              "id": 1,
+              "mem": {
+                "startAddr": "0x20000000",
+                "size": "0x24000"
+              },
+              "isChecked": true,
+              "noInit": false
+            }
+          ],
+          "ROM": [
+            {
+              "tag": "IROM",
+              "id": 1,
+              "mem": {
+                "startAddr": "0x08000000",
+                "size": "0x40000"
+              },
+              "isChecked": true,
+              "isStartup": true
+            },
+            {
+              "tag": "IROM",
+              "id": 2,
+              "mem": {
+                "startAddr": "0x08040000",
+                "size": "0x40000"
+              },
+              "isChecked": false,
+              "isStartup": false
+            }
+          ]
+        },
+        "options": "null"
+      },
+      "uploader": "OpenOCD",
+      "uploadConfig": {
+        "bin": "",
+        "target": "stm32g0x",
+        "interface": "cmsis-dap",
+        "baseAddr": "0x08000000"
+      },
+      "uploadConfigMap": {
+        "JLink": {
+          "bin": "",
+          "baseAddr": "",
+          "cpuInfo": {
+            "vendor": "null",
+            "cpuName": "null"
+          },
+          "proType": 1,
+          "speed": 8000,
+          "otherCmds": ""
+        }
+      },
+      "custom_dep": {
+        "name": "default",
+        "incList": [
+          "user/common",
+          "user",
+          "libraries/FreeRTOS/include",
+          ".eide/deps",
+          "libraries/LinkSDk/external/libdeflate",
+          "libraries/STM32G0B0RETx/Inc",
+          "libraries/STM32G0B0RETx/Drivers/STM32G0xx_HAL_Driver/Inc",
+          "libraries/STM32G0B0RETx/Drivers/STM32G0xx_HAL_Driver/Inc/Legacy",
+          "libraries/STM32G0B0RETx/Drivers/CMSIS/Include",
+          "libraries/STM32G0B0RETx/Drivers/CMSIS/Device/ST/STM32G0xx/Include",
+          "libraries/FreeRTOS/portable",
+          "libraries/LinkSDk/components/compress",
+          "libraries/LinkSDk/components/data-model",
+          "libraries/LinkSDk/components/diag",
+          "libraries/LinkSDk/components/dynreg",
+          "libraries/LinkSDk/components/dynreg-mqtt",
+          "libraries/LinkSDk/components/logpost",
+          "libraries/LinkSDk/components/ntp",
+          "libraries/LinkSDk/components/ota",
+          "libraries/LinkSDk/components/shadow",
+          "libraries/LinkSDk/components/task",
+          "libraries/LinkSDk/core",
+          "libraries/LinkSDk/core/sysdep",
+          "libraries/LinkSDk/core/utils",
+          "libraries/LinkSDk/external/libdeflate/lib",
+          "libraries/LinkSDk/external/mbedtls/include",
+          "libraries/LinkSDk/portfiles/aiot_port",
+          "libraries/cJSON"
+        ],
+        "libList": [],
+        "sourceDirList": [],
+        "defineList": [
+          "DEBUG",
+          "STM32G0B0xx"
+        ]
+      }
+    }
+  },
+  "version": "3.3"
+}

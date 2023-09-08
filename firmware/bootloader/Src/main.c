@@ -18,6 +18,9 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "i2c.h"
+#include "usart.h"
+#include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -38,8 +41,8 @@
 #define APP_BOOTLOADER_ADDRESS (0x08000000)         // 16KB
 #define APP1_FLASH_ADDRESS     (0x08004000)         // 496KB
 #define APP2_FLASH_ADDRESS     (0x08080000)         // 512KB
-#define APP1_FLASH_END_ADDRESS (APP2_FLASH_ADDRESS) // 不包�??????
-#define APP2_FLASH_END_ADDRESS (FLASH_END_ADDRESS)  // 不包�??????
+#define APP1_FLASH_END_ADDRESS (APP2_FLASH_ADDRESS) // 不包�???????
+#define APP2_FLASH_END_ADDRESS (FLASH_END_ADDRESS)  // 不包�???????
 #define APP_INFO_FLASH_SECTOR  FLASH_SECTOR_1
 #define APP_INFO_ENABLED_FLAG  (0xCD)
 /* USER CODE END PD */
@@ -56,15 +59,14 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
 typedef struct {
-    int8_t id;          // app编号,合法值为1�??2
+    int8_t id;          // app编号,合法值为1�???2
     uint32_t addr;      // app地址
     uint32_t timestamp; // app下载时间
     uint32_t size;      // app大小
-    // version字段: "0.0.1"，是有三位的版本�??,分别是对应的version里面的：major, minor, patch
+    // version字段: "0.0.1"，是有三位的版本�???,分别是对应的version里面的：major, minor, patch
     uint8_t version_major;
     uint8_t version_minor;
     uint8_t version_patch;
@@ -84,8 +86,6 @@ app_partition_t g_app_partition;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-static void MX_GPIO_Init(void);
-static void MX_USART3_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -97,14 +97,16 @@ void jump_to_app(void)
 {
 
     int i = 0;
-    // 检查栈顶地址是否合法
+    // �?查栈顶地�?是否合法
     if (((*(uint32_t *)g_app_partition.app_current.addr) & 0x2FFE0000) == 0x20020000) {
         /* 关闭全局中断 */
         __set_PRIMASK(1);
 
         /** 关闭外设 */
-        HAL_UART_DeInit(&huart3);
-        HAL_GPIO_DeInit(GPIOA, GPIO_PIN_5);
+        HAL_UART_DeInit(&huart1);
+        HAL_UART_DeInit(&huart2);
+        HAL_I2C_DeInit(&hi2c1);
+        // HAL_GPIO_DeInit(GPIOA, GPIO_PIN_5);
         HAL_RCC_DeInit();
         HAL_DeInit();
 
@@ -267,7 +269,9 @@ int main(void)
 
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
-    MX_USART3_UART_Init();
+    MX_I2C1_Init();
+    MX_USART1_UART_Init();
+    MX_USART2_UART_Init();
     /* USER CODE BEGIN 2 */
     print_welcome();
     printf("\r\ninit device.");
@@ -330,8 +334,7 @@ void SystemClock_Config(void)
 
     /** Configure the main internal regulator output voltage
      */
-    __HAL_RCC_PWR_CLK_ENABLE();
-    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+    HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1);
 
     /** Initializes the RCC Oscillators according to the specified parameters
      * in the RCC_OscInitTypeDef structure.
@@ -340,111 +343,38 @@ void SystemClock_Config(void)
     RCC_OscInitStruct.HSEState       = RCC_HSE_ON;
     RCC_OscInitStruct.PLL.PLLState   = RCC_PLL_ON;
     RCC_OscInitStruct.PLL.PLLSource  = RCC_PLLSOURCE_HSE;
-    RCC_OscInitStruct.PLL.PLLM       = 4;
-    RCC_OscInitStruct.PLL.PLLN       = 168;
+    RCC_OscInitStruct.PLL.PLLM       = RCC_PLLM_DIV1;
+    RCC_OscInitStruct.PLL.PLLN       = 16;
     RCC_OscInitStruct.PLL.PLLP       = RCC_PLLP_DIV2;
-    RCC_OscInitStruct.PLL.PLLQ       = 4;
+    RCC_OscInitStruct.PLL.PLLQ       = RCC_PLLQ_DIV2;
+    RCC_OscInitStruct.PLL.PLLR       = RCC_PLLR_DIV2;
     if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
         Error_Handler();
     }
 
     /** Initializes the CPU, AHB and APB buses clocks
      */
-    RCC_ClkInitStruct.ClockType      = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+    RCC_ClkInitStruct.ClockType      = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1;
     RCC_ClkInitStruct.SYSCLKSource   = RCC_SYSCLKSOURCE_PLLCLK;
     RCC_ClkInitStruct.AHBCLKDivider  = RCC_SYSCLK_DIV1;
-    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
-    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
 
-    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK) {
+    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK) {
         Error_Handler();
     }
-}
-
-/**
- * @brief USART3 Initialization Function
- * @param None
- * @retval None
- */
-static void MX_USART3_UART_Init(void)
-{
-
-    /* USER CODE BEGIN USART3_Init 0 */
-
-    /* USER CODE END USART3_Init 0 */
-
-    /* USER CODE BEGIN USART3_Init 1 */
-
-    /* USER CODE END USART3_Init 1 */
-    huart3.Instance          = USART3;
-    huart3.Init.BaudRate     = 921600;
-    huart3.Init.WordLength   = UART_WORDLENGTH_8B;
-    huart3.Init.StopBits     = UART_STOPBITS_1;
-    huart3.Init.Parity       = UART_PARITY_NONE;
-    huart3.Init.Mode         = UART_MODE_TX_RX;
-    huart3.Init.HwFlowCtl    = UART_HWCONTROL_NONE;
-    huart3.Init.OverSampling = UART_OVERSAMPLING_16;
-    if (HAL_UART_Init(&huart3) != HAL_OK) {
-        Error_Handler();
-    }
-    /* USER CODE BEGIN USART3_Init 2 */
-
-    /* USER CODE END USART3_Init 2 */
-}
-
-/**
- * @brief GPIO Initialization Function
- * @param None
- * @retval None
- */
-static void MX_GPIO_Init(void)
-{
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-    /* USER CODE BEGIN MX_GPIO_Init_1 */
-    /* USER CODE END MX_GPIO_Init_1 */
-
-    /* GPIO Ports Clock Enable */
-    __HAL_RCC_GPIOH_CLK_ENABLE();
-    __HAL_RCC_GPIOE_CLK_ENABLE();
-    __HAL_RCC_GPIOB_CLK_ENABLE();
-    __HAL_RCC_GPIOD_CLK_ENABLE();
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-
-    /*Configure GPIO pin Output Level */
-    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, GPIO_PIN_RESET);
-
-    /*Configure GPIO pin Output Level */
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10 | GPIO_PIN_11, GPIO_PIN_RESET);
-
-    /*Configure GPIO pin : PE15 */
-    GPIO_InitStruct.Pin   = GPIO_PIN_15;
-    GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull  = GPIO_PULLDOWN;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
-
-    /*Configure GPIO pins : PB10 PB11 */
-    GPIO_InitStruct.Pin   = GPIO_PIN_10 | GPIO_PIN_11;
-    GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_OD;
-    GPIO_InitStruct.Pull  = GPIO_PULLUP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-    /* USER CODE BEGIN MX_GPIO_Init_2 */
-    /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
 #ifdef __GNUC__
 int _write(int fd, char *ptr, int len)
 {
-    HAL_UART_Transmit(&huart3, (uint8_t *)ptr, len, 0xFFFF);
+    HAL_UART_Transmit(&huart2, (uint8_t *)ptr, len, 0xFFFF);
     return len;
 }
 #else
 int fputc(int ch, FILE *f)
 {
-    HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, 0xFFFF); // 输出指向串口USART3
+    HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFF); // 输出指向串口USART3
     return ch;
 }
 #endif
