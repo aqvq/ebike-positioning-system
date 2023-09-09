@@ -469,7 +469,7 @@ static core_at_cmd_item_t at_tcp_state_cmd_table[] = {
 };
 //----------------------- end---- --------------------------------------
 
-at_device_t ec200_at_cmd = {
+at_device_t ec800m_at_cmd = {
     .ip_init_cmd      = at_ip_init_cmd_table,
     .ip_init_cmd_size = sizeof(at_ip_init_cmd_table) / sizeof(core_at_cmd_item_t),
 

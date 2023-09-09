@@ -83,15 +83,15 @@ extern aiot_net_al_t g_aiot_net_at_api;
 static QueueHandle_t uart_queue_lte;
 
 /*AT module*/
-extern at_device_t ec200_at_cmd;
-extern at_device_t ec200_at_cmd_ssl;
+extern at_device_t ec800m_at_cmd;
+extern at_device_t ec800m_at_cmd_ssl;
 extern at_device_t l610_at_cmd;
 extern at_device_t l610_at_cmd_ssl;
 extern at_device_t air724_at_cmd;
 extern at_device_t air724_at_cmd_ssl;
 
 // 使用EC200U
-at_device_t *device = &ec200_at_cmd;
+at_device_t *device = &ec800m_at_cmd;
 
 /* i2c_master是否已经初始化 */
 static uint8_t is_i2c_master_initialized = 0;

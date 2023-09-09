@@ -2,97 +2,85 @@
 #include "flash.h"
 #include "log/log.h"
 #include "error_type.h"
-
+#include "bsp/boot/boot.h"
 #define TAG "FLASH"
 
-/**
- * @brief 擦除扇区，只能按sector擦除
- *
- * @param sector uint8_t数组，第一个元素代表擦除扇区起始编号，第二个元素代表擦除扇区数
- */
-error_t flash_erase_sector(uint8_t *sector)
+uint32_t flash_read(uint32_t addr, uint8_t *buffer, uint32_t length)
 {
-    FLASH_EraseInitTypeDef EraseInitStruct;
-    HAL_FLASH_Unlock(); // 解锁
-    __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR |
-                           FLASH_FLAG_PGAERR | FLASH_FLAG_PGSERR); // 清除一些错误标志
-    error_t err = OK;
-    uint32_t SectorError;
-
-    EraseInitStruct.Banks        = FLASH_BANK_1;                       // 选择哪个Bank
-    EraseInitStruct.Page       = sector[0];                          // 要擦除哪个扇区
-    EraseInitStruct.TypeErase    = FLASH_TYPEERASE_PAGES;            // 只是擦除操作
-    EraseInitStruct.NbPages    = sector[1];                          // 一次只擦除一个扇区
-    if (HAL_OK != HAL_FLASHEx_Erase(&EraseInitStruct, &SectorError)) { /* 擦除某一扇区 */
-        err = FLASH_ERASE_ERROR;
-        LOGE(TAG, "flash erase error\n");
-    }
-    HAL_FLASH_Lock(); // 上锁
-    return err;
+    memcpy(buffer, (void *)addr, length);
+    return (addr + length);
 }
 
-// 写数据
-error_t flash_program_word(uint32_t StartAddress, uint32_t data)
+static uint8_t flash_get_alternate_bank(void)
 {
-    // 可以添加一些 StartAddress地址 是否有效的判断
-    error_t err = OK;
-    HAL_FLASH_Unlock(); // 解锁
-    if (HAL_OK != HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, StartAddress, data)) {
-        err = FLASH_WRITE_ERROR;
-        LOGE(TAG, "flash write error\n");
-    }
-    HAL_FLASH_Lock(); // 上锁
-    return err;
+    return (boot_get_current_bank() == 0 ? 1 : 0);
 }
 
-error_t flash_program(uint32_t addr, uint8_t *buffer, uint32_t length)
+error_t flash_erase_alternate_bank(void)
 {
-    FLASH_EraseInitTypeDef FlashEraseInit = {0};
-    HAL_StatusTypeDef FlashStatus         = HAL_OK;
-    uint32_t SectorError                  = 0;
-    uint32_t end_addr                     = addr + length;
-    error_t err                           = OK;
-
-    HAL_FLASH_Unlock(); // 解锁
-    if (FlashStatus == HAL_OK) {
-        while (addr < end_addr) // 写数据
-        {
-            if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, addr, ((uint32_t *)buffer)[0]) != HAL_OK) // 写入数据
-            {
-                printf("flash write error\n");
-                err = FLASH_WRITE_ERROR;
-                break; // 写入异常
-            }
-            addr += 4;
-            buffer += 4; // 写入下一个数据
-        }
-    }
-    HAL_FLASH_Lock(); // 上锁
-    return err;
-}
-
-uint8_t flash_read_byte(uint32_t address)
-{
-    return *(uint8_t *)address;
-}
-
-uint16_t flash_read_half_word(uint32_t address)
-{
-    return *(uint16_t *)address;
-}
-
-uint32_t flash_read_word(uint32_t address)
-{
-    return *(uint32_t *)address;
-}
-
-error_t flash_read(uint32_t addr, uint8_t *buffer, uint32_t length)
-{
-    uint32_t end_addr = addr + length;
-    while (addr < end_addr) {
-        ((uint32_t *)buffer)[0] = flash_read_word(addr); // 读取1个字节.
-        addr += 4;
-        buffer += 4;
+    FLASH_EraseInitTypeDef flash_erase_init;
+    uint32_t PageError         = 0;
+    flash_erase_init.Banks     = (flash_get_alternate_bank() == 0 ? FLASH_BANK_1 : FLASH_BANK_2);
+    flash_erase_init.TypeErase = FLASH_TYPEERASE_MASS;
+    flash_erase_init.Page      = 0;
+    flash_erase_init.NbPages   = FLASH_PAGE_NB;
+    HAL_FLASH_Unlock();
+    HAL_StatusTypeDef ret = HAL_FLASHEx_Erase(&flash_erase_init, &PageError);
+    HAL_FLASH_Lock();
+    if (ret != HAL_OK || PageError != 0xFFFFFFFF) {
+        return FLASH_ERASE_ERROR;
     }
     return OK;
+}
+
+uint32_t flash_get_alternate_bank_address(void)
+{
+    if (flash_get_alternate_bank() == 0) {
+        return 0x08000000;
+    } else if (flash_get_alternate_bank() == 1) {
+        return 0x08040000;
+    } else {
+        LOGE(TAG, "Unexpected Error");
+        Error_Handler();
+    }
+}
+
+// buffer points to a double-words data
+// which means the length of buffer 8
+static void flash_write_dword(uint32_t addr, uint8_t *buffer)
+{
+    HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, addr, *(uint64_t *)buffer);
+}
+
+// buffer points to a 64-words data
+// which means the length of buffer 256
+static void flash_write_fast(uint32_t addr, uint8_t *buffer)
+{
+    HAL_FLASH_Program(FLASH_TYPEPROGRAM_FAST, addr, (uint64_t)buffer);
+}
+
+uint32_t flash_write(uint32_t addr, uint8_t *buffer, uint32_t length)
+{
+    while (length > 0) {
+        if (length >= 256) {
+            flash_write_fast(addr, buffer);
+            buffer += 256;
+            addr += 256;
+            length -= 256;
+        } else if (length >= 8) {
+            flash_write_dword(addr, buffer);
+            buffer += 8;
+            addr += 8;
+            length -= 8;
+        } else {
+            LOGW(TAG, "Flash write address is not aligned with 64 bytes.");
+            uint8_t data[8] = {0};
+            memcpy(data, buffer, length);
+            flash_write_dword(addr, data);
+            buffer += length;
+            addr += length;
+            length -= length;
+        }
+    }
+    return addr;
 }
