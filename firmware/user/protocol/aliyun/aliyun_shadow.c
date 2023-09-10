@@ -10,7 +10,7 @@
 #include "task.h"
 #include "timers.h"
 #include "aliyun_shadow.h"
-#include "core/gateway_config.h"
+#include "msg/gateway_config.h"
 // #include "can_screen_param.h"
 // #include "sensor_position_manager.h"
 #include "log/log.h"

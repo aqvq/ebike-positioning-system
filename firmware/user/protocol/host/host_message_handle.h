@@ -2,7 +2,7 @@
 #ifndef _HOST_MESSAGE_HANDLE_H_
 #define _HOST_MESSAGE_HANDLE_H_
 
-#include "core/general_message.h"
+#include "msg/general_message.h"
 
 /// @brief 处理收到的通用数据
 /// @param general_message

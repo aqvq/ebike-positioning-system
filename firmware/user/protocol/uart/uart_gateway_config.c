@@ -8,7 +8,7 @@
 #include "log/log.h"
 #include "string.h"
 #include "cJSON.h"
-#include "core/gateway_config.h"
+#include "msg/gateway_config.h"
 #include "utils/util.h"
 #include "FreeRTOS.h"
 #include "storage/storage.h"

@@ -18,6 +18,7 @@
 })
 
 #define roundup(x, y) ((((x) + ((y) - 1)) / (y)) * (y))
+#define array_size(x) (sizeof(x) / sizeof((x)[0]))
 
 #define assert(x)                                         \
     do {                                                  \

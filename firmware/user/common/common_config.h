@@ -10,7 +10,7 @@ typedef uint8_t bool;
 #define MAC_ADDR_LEN         (6)
 
 #define RAM_HEAP_SIZE        (90 * 1024)
-#define CCMRAM_HEAP_SIZE     (64 * 1024)
+// #define CCMRAM_HEAP_SIZE     (64 * 1024)
 
 #define RAM_START_ADDRESS    ((uint8_t *)0x20000000)
 #define RAM_SIZE             (128 * 1024)

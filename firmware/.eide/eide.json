@@ -26,11 +26,6 @@
         "libraries/FreeRTOS/heap_4.c",
         "libraries/w25qxx/example",
         "user/main/system_monitor.c",
-        "libraries/LinkSDk/portfiles/aiot_port/at/module/air724_ssl.c",
-        "libraries/LinkSDk/portfiles/aiot_port/at/module/air724_tcp.c",
-        "libraries/LinkSDk/portfiles/aiot_port/at/module/fibcom_l610_ssl.c",
-        "libraries/LinkSDk/portfiles/aiot_port/at/module/fibcom_l610_tcp.c",
-        "libraries/LinkSDk/portfiles/aiot_port/at/module/quectel_ec200s_ssl.c",
         "user/diagnosis",
         "user/can/mcp2515.c",
         "user/can/can_spi.c",
@@ -47,7 +42,11 @@
         "libraries/FreeRTOS/portable/heap_1.c",
         "libraries/FreeRTOS/portable/heap_2.c",
         "libraries/FreeRTOS/portable/heap_3.c",
-        "libraries/FreeRTOS/portable/heap_4.c"
+        "libraries/FreeRTOS/portable/heap_4.c",
+        "user/conn/[deprecated]at_api.c",
+        "user/conn/[deprecated]hal_adapter.c",
+        "libraries/minmea_backup",
+        "user/protocol/aliyun/mqtt_conn.c"
       ],
       "toolchain": "AC6",
       "compileConfig": {
@@ -143,7 +142,9 @@
           "libraries/LinkSDk/external/libdeflate/lib",
           "libraries/LinkSDk/external/mbedtls/include",
           "libraries/LinkSDk/portfiles/aiot_port",
-          "libraries/cJSON"
+          "libraries/cJSON",
+          "libraries/LinkSDk/portfiles/aiot_port/at",
+          "libraries/minmea"
         ],
         "libList": [],
         "sourceDirList": [],

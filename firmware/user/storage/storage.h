@@ -9,7 +9,7 @@
 
 #include <stdint.h>
 #include "error_type.h"
-#include "core/gateway_config.h"
+#include "msg/gateway_config.h"
 #include "protocol/aliyun/aliyun_dynreg.h"
 #include "protocol/aliyun/device_info.h"
 #include "log/log.h"

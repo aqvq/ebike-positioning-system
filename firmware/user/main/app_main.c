@@ -13,14 +13,14 @@
 #include "stream_buffer.h"
 
 #include "log/log.h"
-#include "core/gateway_config.h"
+#include "msg/gateway_config.h"
 #include "app_config.h"
 #include "protocol/host/host_protocol.h"
 #include "cJSON.h"
 #include "storage/storage.h"
 #include "protocol/iot/iot_helper.h"
-#include "bsp/4g/at_api.h"
-#include "bsp/4g/hal_adapter.h"
+#include "aiot_at_api.h"
+#include "bsp/at/ec800m_at_api.h"
 #include "app_main.h"
 #include "protocol/uart/uart_gateway_config.h"
 #include "gnss/gnss.h"
@@ -113,7 +113,7 @@ void ec200_poweroff_and_mcu_restart(void)
 {
 #if MQTT_ENABLED || GNSS_ENABLED
     iot_disconnect();   // 断开连接
-    aiot_at_poweroff(); // 关闭整个4G模块
+    ec800m_at_poweroff(); // 关闭整个4G模块
 #endif
     stm32_restart();
 }
@@ -164,7 +164,7 @@ void app_main(void)
 
 #if GNSS_ENABLED || MQTT_ENABLED
     // 初始化4G模块
-    xTaskCreate(task_4g, "at_init", 5120, NULL, 3, NULL);
+    // xTaskCreate(task_4g, "at_init", 5120, NULL, 3, NULL);
 #endif
 
 #if HOST_ENABLED

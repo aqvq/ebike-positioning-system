@@ -2,9 +2,9 @@
 #include <string.h>
 #include "FreeRTOS.h"
 #include "task.h"
-#include "bsp/4g/at_api.h"
+#include "aiot_at_api.h"
+#include "bsp/at/ec800m_at_api.h"
 #include "aiot_state_api.h"
-#include "bsp/4g/hal_adapter.h"
 #include "utils/linked_list.h"
 #include "log/log.h"
 #include "utils/util.h"
@@ -12,9 +12,10 @@
 #include "gnss.h"
 #include "cJSON.h"
 #include "minmea.h"
-#include "core/general_message.h"
+#include "msg/general_message.h"
 #include "protocol/iot/iot_helper.h"
 #include "main/app_main.h"
+#include "bsp/at/ec800m_at_api.h"
 
 //-------------------------------------全局变量-------------------------------------------------------------
 #define GPS_DATA      (1)
@@ -322,7 +323,7 @@ int app_ble_4g_mqtt_pub_gnss(void *handle, char *gnss_string)
         {
             pos[flag] = i;
             flag++;
-        }        
+        }
     }
     // for (uint8_t i = 0; i < 10; i++)
     // {
@@ -334,8 +335,8 @@ int app_ble_4g_mqtt_pub_gnss(void *handle, char *gnss_string)
     gps.COG[6] = '\0';
     gps.date[6] = '\0';
     char tmpstr[10] = {0};
-    
-    memcpy(gps.UTC_time, gnss_string+(pos[0]-10), 10);    
+
+    memcpy(gps.UTC_time, gnss_string+(pos[0]-10), 10);
     memcpy(gps.latitude, gnss_string+pos[0]+1, (pos[1]-pos[0]-1));
     memcpy(gps.longitude, gnss_string+pos[1]+1, (pos[2]-pos[1]-1));
 
@@ -366,15 +367,15 @@ int app_ble_4g_mqtt_pub_gnss(void *handle, char *gnss_string)
     memcpy(tmpstr, gnss_string+pos[9]+1, 2);
     gps.nsat = atoi(tmpstr);
 
-    printf("UTC_time:%s, latitude:%s, longitude:%s, HDOP:%.1f, altitude:%.1f, fix:%d, C0G:%s, spkm:%.1f, spkn:%.1f, date:%s, nsat:%d\n", 
+    printf("UTC_time:%s, latitude:%s, longitude:%s, HDOP:%.1f, altitude:%.1f, fix:%d, C0G:%s, spkm:%.1f, spkn:%.1f, date:%s, nsat:%d\n",
     gps.UTC_time, gps.latitude, gps.longitude, gps.HDOP, gps.altitude, gps.fix, gps.COG, gps.spkm, gps.spkn, gps.date, gps.nsat);
-    
+
     for (uint8_t i = 0; i < 11; i++)
     {
         spkm[12-i-1] = spkm[12-i-2];
         altitude[12-i-1] = altitude[12-i-2];
     }
-    
+
     spkm[0] = gps.spkm;
     altitude[0] = gps.altitude;
 
@@ -389,9 +390,9 @@ int app_ble_4g_mqtt_pub_gnss(void *handle, char *gnss_string)
         if (spkm[i] < 3.6)
         {
             stopFlag++;
-        }        
+        }
     }
-    
+
     //最近7报数据中，若有4包或4包以上的速度小于3.6km/h，则认为车辆停止运行
     if (stopFlag >= 4)
     {
@@ -408,9 +409,9 @@ int app_ble_4g_mqtt_pub_gnss(void *handle, char *gnss_string)
         if (altitude[i] > 0.0)
         {
             altitudeFlag++;
-        }        
+        }
     }
-    
+
     //最近5包数据中，若有4包或4包以上的高度不为0，则当前高度为0的数据包不发送到4g
     if (altitudeFlag >= 4 && gps.altitude < 0.001)
     {
@@ -611,7 +612,7 @@ void gnss_task(void *pvParameters)
 
 #if GPS_DATA_TYPE == GPS_DATA
         // 老的接口
-        aiot_at_gnss_location();
+        ec800m_at_gnss_location();
 
         // +QGPSLOC: 074839.000,3145.8432N,11716.0268E,1.1,76.3,3,000.00,0.0,0.0,121222,20
         // +QGPSLOC: 094614.000,3145.8370N,11716.0300E,1.4,91.0,3,000.00,0.0,0.0,200223,20
@@ -698,7 +699,7 @@ void gnss_task(void *pvParameters)
         }
 #else
         // 回调函数中，全部数据获取并且数据被正确解析
-        if (aiot_at_gnss_nema_query() == 0) {
+        if (ec800m_at_gnss_nema_query() == 0) {
             // 向订阅的任务推送数据
             general_message_to_queue();
         }
@@ -706,7 +707,7 @@ void gnss_task(void *pvParameters)
     }
 
     // 一般不会运行到这里
-    aiot_at_gnss_close();
+    ec800m_at_gnss_close();
     vTaskDelete(NULL);
 }
 
@@ -714,13 +715,13 @@ void gnss_init(void)
 {
     do {
         int32_t res = STATE_SUCCESS;
-        res         = aiot_at_gnss_close();
+        res         = ec800m_at_gnss_close();
         if (res >= 0) {
             LOGW(TAG, "gnss is closed.");
         }
 
         // 查询GNSS是否打开
-        res = aiot_at_gnss_state();
+        res = ec800m_at_gnss_state();
 
         if (res >= 0 && gnss_state == 1) {
             LOGW(TAG, "gnss is open.");
@@ -728,7 +729,7 @@ void gnss_init(void)
 #if AGPS_ENABLE
             if (strstr(QuectelDeviceType, "EC200U")) // 当是EC200U时，启动AGPS功能
             {
-                res = aiot_at_gnss_agps_open();
+                res = ec800m_at_gnss_agps_open();
                 if (res < 0) {
                     LOGE(TAG, "open agps failed, error code: %d", res);
                     vTaskDelay(1000 / portTICK_RATE_MS);
@@ -739,7 +740,7 @@ void gnss_init(void)
             }
 #endif
 
-            res = aiot_at_gnss_open();
+            res = ec800m_at_gnss_open();
             if (res < 0) {
                 LOGE(TAG, "open gnss failed, error code: %d", res);
                 break;
@@ -748,13 +749,13 @@ void gnss_init(void)
 #if AGPS_ENABLE
             if (strstr(QuectelDeviceType, "EC200U")) // 当是EC200U时，启动AGPS功能
             {
-                res = aiot_at_gnss_agps_download();
+                res = ec800m_at_gnss_agps_download();
                 if (res < 0) {
                     LOGE(TAG, "apgs download failed, error code: %d", res);
                     break;
                 }
 
-                res = aiot_at_gnss_nema_enable();
+                res = ec800m_at_gnss_nema_enable();
                 if (res < 0) {
                     LOGE(TAG, "open gnss nema failed, error code: %d", res);
                     break;

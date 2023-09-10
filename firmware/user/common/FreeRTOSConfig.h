@@ -50,13 +50,14 @@ extern uint32_t SystemCoreClock;
 /* Constants that describe the hardware and memory usage. */
 #define configCPU_CLOCK_HZ               (SystemCoreClock)
 #define configTICK_RATE_HZ               ((TickType_t)1000)
-#define configTOTAL_HEAP_SIZE            ((size_t)((RAM_HEAP_SIZE) + (CCMRAM_HEAP_SIZE)))
+#define configTOTAL_HEAP_SIZE            ((size_t)(RAM_HEAP_SIZE))
 #define configMINIMAL_STACK_SIZE         ((uint16_t)128)
 #define configSUPPORT_DYNAMIC_ALLOCATION 1
 #define configSUPPORT_STATIC_ALLOCATION  0
+// #define configTOTAL_HEAP_SIZE            ((size_t)((RAM_HEAP_SIZE) + (CCMRAM_HEAP_SIZE)))
 
 /* Constants related to the behaviour or the scheduler. */
-#define configMAX_PRIORITIES    56
+#define configMAX_PRIORITIES    6
 #define configUSE_PREEMPTION    1
 #define configUSE_TIME_SLICING  1
 #define configIDLE_SHOULD_YIELD 1
@@ -117,17 +118,17 @@ extern uint32_t SystemCoreClock;
 #define configPRIO_BITS __NVIC_PRIO_BITS
 #else
 /* 7 priority levels */
-#define configPRIO_BITS 4
+#define configPRIO_BITS 2
 #endif
 
 /* The lowest interrupt priority that can be used in a call to a "set priority" function. */
-#define configLIBRARY_LOWEST_INTERRUPT_PRIORITY 15
+#define configLIBRARY_LOWEST_INTERRUPT_PRIORITY 3
 
 /* The highest interrupt priority that can be used by any interrupt service
  * routine that makes calls to interrupt safe FreeRTOS API functions.  DO NOT
  * CALL INTERRUPT SAFE FREERTOS API FUNCTIONS FROM ANY INTERRUPT THAT HAS A
  * HIGHER PRIORITY THAN THIS! (higher priorities are lower numeric values). */
-#define configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY 5
+#define configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY 1
 
 /* Interrupt priorities used by the kernel port layer itself.  These are generic
  * to all Cortex-M ports, and do not rely on any particular library functions. */

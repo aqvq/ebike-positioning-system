@@ -1,10 +1,4 @@
 /*
- * @Date: 2023-08-31 15:54:25
- * @LastEditors: ShangWentao shangwentao
- * @LastEditTime: 2023-08-31 17:07:33
- * @FilePath: \firmware\user\gnss\minmea.c
- */
-/*
  * Copyright © 2014 Kosma Moczek <kosma@cloudyourcar.com>
  * This program is free software. It comes without any warranty, to the extent
  * permitted by applicable law. You can redistribute it and/or modify it under

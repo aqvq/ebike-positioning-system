@@ -11,7 +11,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
-#include "core/general_message.h"
+#include "msg/general_message.h"
 #include "log/log.h"
 #include "protocol/host/host_protocol.h"
 #include "protocol/host/host_message_handle.h"

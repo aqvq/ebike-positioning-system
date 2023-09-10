@@ -6,7 +6,8 @@
  */
 
 #include "aiot_mqtt_api.h"
-#include "bsp/4g/at_api.h"
+#include "aiot_at_api.h"
+#include "bsp/at/ec800m_at_api.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"

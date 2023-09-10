@@ -6,7 +6,7 @@
 #include "cJSON.h"
 #include "log/log.h"
 
-#include "gnss/minmea.h"
+#include "minmea.h"
 #include "gnss/gnss.h"
 #include "utils/util.h"
 

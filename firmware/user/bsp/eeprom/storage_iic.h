@@ -2,7 +2,7 @@
 #ifndef __IIC_H
 #define __IIC_H
 #include "main.h"
-#include "bsp/utils/Delay.h"
+#include "bsp/mcu/mcu.h"
 
 // 软件IIC SDA引脚
 #define IIC_SDA_PIN GPIOA, GPIO_PIN_10
