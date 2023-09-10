@@ -12,7 +12,7 @@
 #include "gnss.h"
 #include "cJSON.h"
 #include "minmea.h"
-#include "msg/general_message.h"
+#include "data/general_message.h"
 #include "protocol/iot/iot_helper.h"
 #include "main/app_main.h"
 #include "bsp/at/ec800m_at_api.h"
@@ -27,7 +27,7 @@ extern linked_list_t *gnss_response_list;
 
 static const char *TAG = "GNSS";
 
-// 定位字符串，quectel_ec200s_tcp.c
+// 定位字符串，quectel_ec800ms_tcp.c
 extern char gnss_string[128];
 
 /* GNSS模块状态: 1-打开 0-关闭 */
@@ -464,14 +464,9 @@ static void general_message_to_queue(void)
         }
 
         // 创建通用消息
-        general_message_t msg;
-        msg.type     = GNSS_DATA;
-        msg.data_len = strlen(gnss_string);
-        msg.data     = pvPortMalloc(msg.data_len);
-        memcpy(msg.data, (void *)gnss_string, msg.data_len);
-
+        general_message_t *msg = create_general_message(GNSS_DATA, gnss_string, strlen(gnss_string));
         if (pdPASS != xQueueSend(subscribers[i], (void *)&msg, 10)) {
-            free_general_message(&msg); // 发送失败，释放资源
+            free_general_message(msg); // 发送失败，释放资源
             LOGE(TAG, "send data to queue failed");
         }
     }
@@ -490,14 +485,9 @@ static void general_message_to_queue(void)
         }
 
         // 创建通用消息
-        general_message_t msg;
-        msg.type     = GNSS_NMEA_DATA;
-        msg.data_len = sizeof(gnss_nmea_data_t);
-        msg.data     = pvPortMalloc(sizeof(gnss_nmea_data_t));
-        memcpy(msg.data, (void *)&_gnss_nmea_data, msg.data_len);
-
+        general_message_t *msg = create_general_message(GNSS_NMEA_DATA, &_gnss_nmea_data, sizeof(gnss_nmea_data_t));
         if (pdPASS != xQueueSend(subscribers[i], (void *)&msg, 10)) {
-            free_general_message(&msg); // 发送失败，释放资源
+            free_general_message(msg); // 发送失败，释放资源
             LOGE(TAG, "send data to queue failed");
         }
     }
@@ -580,7 +570,7 @@ static int8_t parse_gnss_string(gnss_data_t *data)
 float g_gnss_speed_mean = 0;                            /* 速度平均值 */
 
 /*******************************************************************
- * 向物联网平台发送GPS数据的策略(2023-02-28)
+ * 向物联网平台发送GPS数据的策略
  * 1. 模块初始化后或者定位失败后，前N个点的数据发送给物联网平台
  * 2. 若连续N个点的速度值均低于阈值T，则第N+1个点的数据不发送给物联网平台
  * 3. 每隔M个点，必须给物联网平台发送一次数据
@@ -604,11 +594,11 @@ void gnss_task(void *pvParameters)
 
     for (;;) {
         if (g_app_upgrade_flag) {
-            vTaskDelay(500 / portTICK_PERIOD_MS);
+            vTaskDelay(pdMS_TO_TICKS(500));
             continue;
         }
 
-        vTaskDelay(GNSS_INTERVAL_TIME / portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(GNSS_INTERVAL_TIME));
 
 #if GPS_DATA_TYPE == GPS_DATA
         // 老的接口
@@ -693,8 +683,8 @@ void gnss_task(void *pvParameters)
             //----------------------------------------------
             if ((gnss_error_50_num * GNSS_INTERVAL_TIME) >= GNSS_ERROR_50_CONTINUE_TIME_MAX) {
                 iot_post_log(IOT_LOG_LEVEL_ERROR, "GNSS", 100, "Restart all (error 50).");
-                vTaskDelay(1000 / portTICK_PERIOD_MS);
-                ec200_poweroff_and_mcu_restart();
+                vTaskDelay(pdMS_TO_TICKS(1000));
+                ec800m_poweroff_and_mcu_restart();
             }
         }
 #else
@@ -732,7 +722,7 @@ void gnss_init(void)
                 res = ec800m_at_gnss_agps_open();
                 if (res < 0) {
                     LOGE(TAG, "open agps failed, error code: %d", res);
-                    vTaskDelay(1000 / portTICK_RATE_MS);
+                    vTaskDelay(pdMS_TO_TICKS(1000 / portTICK_RATE_MS);
                     continue;
                 }
             } else {

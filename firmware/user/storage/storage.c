@@ -47,7 +47,7 @@ error_t storage_install_interface(storage_interface_t *interface)
         config.data_version = STORAGE_METADATA_VERSION;
         storage_write(metadata, &config);
         // LOGD(TAG, "restart");
-        // stm32_restart();
+        // mcu_restart();
     }
 
     return OK;

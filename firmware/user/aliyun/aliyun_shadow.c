@@ -10,7 +10,7 @@
 #include "task.h"
 #include "timers.h"
 #include "aliyun_shadow.h"
-#include "msg/gateway_config.h"
+#include "data/gateway_config.h"
 // #include "can_screen_param.h"
 // #include "sensor_position_manager.h"
 #include "log/log.h"
@@ -278,7 +278,7 @@ void update_shadow_task(void *pvParameters)
 
     if (update_shadow_restart_flag) {
         LOGE(TAG, "receive parameter from shadow, restart");
-        stm32_restart();
+        mcu_restart();
     }
 
     vTaskDelete(NULL);

@@ -4,6 +4,7 @@
 #include "os_net_interface.h"
 #include <string.h>
 #include "ec800m_at_api.h"
+#include "bsp/mcu/mcu.h"
 
 /*huart1 for at module*/
 extern UART_HandleTypeDef huart1;
@@ -16,8 +17,8 @@ extern aiot_os_al_t g_aiot_freertos_api;
 extern aiot_net_al_t g_aiot_net_at_api;
 
 /*AT module*/
-extern at_device_t ec200_at_cmd;
-extern at_device_t ec200_at_cmd_ssl;
+extern at_device_t ec800m_at_cmd;
+extern at_device_t ec800m_at_cmd_ssl;
 extern at_device_t l610_at_cmd;
 extern at_device_t l610_at_cmd_ssl;
 extern at_device_t air724_at_cmd;
@@ -138,8 +139,8 @@ int32_t at_uart_send(uint8_t *p_data, uint16_t len, uint32_t timeout)
 #ifdef __GNUC__
 int _write(int fd, char *ptr, int len)
 {
-  HAL_UART_Transmit(&huart2, (uint8_t*)ptr, len, 0xFFFF);
-  return len;
+    HAL_UART_Transmit(&huart2, (uint8_t *)ptr, len, 0xFFFF);
+    return len;
 }
 
 #else
@@ -189,4 +190,13 @@ int32_t at_hal_init(void)
     }
 
     return 0;
+}
+
+error_t ec800m_init()
+{
+    ec800m_vbat_on();
+    ec800m_gnss_ant_on();
+    ec800m_vbus_off();
+    delay_ms(30);
+    ec800m_on();
 }

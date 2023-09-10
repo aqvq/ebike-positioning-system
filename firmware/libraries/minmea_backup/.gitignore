@@ -1,7 +1,0 @@
-*.o
-*~
-*.diff
-.*.swp
-minmea
-tests
-example

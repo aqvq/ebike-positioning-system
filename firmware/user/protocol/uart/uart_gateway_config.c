@@ -8,17 +8,17 @@
 #include "log/log.h"
 #include "string.h"
 #include "cJSON.h"
-#include "msg/gateway_config.h"
+#include "data/gateway_config.h"
 #include "utils/util.h"
 #include "FreeRTOS.h"
 #include "storage/storage.h"
 #include "stream_buffer.h"
-#include "protocol/aliyun/aliyun_dynreg.h"
+#include "aliyun/aliyun_dynreg.h"
 #include "main/app_main.h"
 #include "FreeRTOS.h"
 #include "task.h"
-#include "protocol/aliyun/device_info.h"
-#include "partition/partition_info.h"
+#include "data/device_info.h"
+#include "data/partition_info.h"
 
 static const char *TAG = "UART_GATEWAY_CONFIG";
 #define UART_GATEWAY_CONFIG_NUM UART_NUM_0
@@ -229,7 +229,7 @@ error_t uart_data_parse(const char *message)
     LOGI(TAG, "%s\n", txt);
 
     if (flag_restart) {
-        ec200_poweroff_and_mcu_restart();
+        ec800m_poweroff_and_mcu_restart();
     }
 
     cJSON_Delete(root);

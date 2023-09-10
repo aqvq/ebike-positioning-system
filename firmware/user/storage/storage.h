@@ -9,11 +9,11 @@
 
 #include <stdint.h>
 #include "error_type.h"
-#include "msg/gateway_config.h"
-#include "protocol/aliyun/aliyun_dynreg.h"
-#include "protocol/aliyun/device_info.h"
+#include "data/gateway_config.h"
+#include "aliyun/aliyun_dynreg.h"
+#include "data/device_info.h"
 #include "log/log.h"
-#include "partition/partition_info.h"
+#include "data/partition_info.h"
 #include "utils/macros.h"
 
 #define STORAGE_DEVICE_INIT_FLAG (0x7E)

@@ -18,18 +18,20 @@
 #include "log/log.h"
 #include "aliyun_ota.h"
 #include "mqtt_download_private.h"
-#include "partition/iap.h"
+#include "upgrade/iap.h"
 #include "storage/storage.h"
-#include "partition/iap.h"
-#include "partition/partition_info.h"
+#include "upgrade/iap.h"
+#include "data/partition_info.h"
 #include "error_type.h"
 #include "utils/macros.h"
+#include "bsp/mcu/mcu.h"
+#include "bsp/at/ec800m_at_api.h"
 
 static const char *TAG = "ALIYUN_OTA";
 
 //--------------------------全局变量-----------------------------------
 // 关闭EC200模块并重启ESP32, 定义在main中
-extern void ec200_poweroff_and_mcu_restart(void);
+extern void ec800m_poweroff_and_mcu_restart(void);
 
 extern int g_major_version; /* 当前程序major版本 */
 extern int g_minor_version; /* 当前程序minor版本 */
@@ -49,7 +51,7 @@ static uint32_t ota_app_size          = 0;
 
 static void ota_mcu_restart(void)
 {
-    ec200_poweroff_and_mcu_restart();
+    ec800m_poweroff_and_mcu_restart();
 }
 
 static void aliyun_ota_task(void *pvParameters);

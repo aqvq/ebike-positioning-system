@@ -2,9 +2,9 @@
 #include "task.h"
 #include "queue.h"
 #include "log/log.h"
-#include "protocol/aliyun/aliyun_protocol.h"
-#include "protocol/iot/iot_helper.h"
-#include "protocol/iot/iot_interface.h"
+#include "aliyun/aliyun_protocol.h"
+#include "iot_helper.h"
+#include "iot_interface.h"
 #include "storage/storage.h"
 #include "gnss/gnss.h"
 
@@ -32,7 +32,7 @@ static int32_t received_from_iot(void *data)
 void iot_send_task(void *pvParameters)
 {
     QueueHandle_t message_queue;
-    message_queue = xQueueCreate(100, sizeof(general_message_t));
+    message_queue = xQueueCreate(100, sizeof(general_message_t *));
     if (message_queue == NULL) {
         LOGE(TAG, "create iot message queue failed");
         vTaskDelete(NULL);
@@ -42,7 +42,7 @@ void iot_send_task(void *pvParameters)
     // 订阅GNSS消息
     subscribe_gnss_nmea_data(message_queue);
 
-    general_message_t general_message;
+    general_message_t *general_message;
     while (is_connect_iot) {
         if (g_app_upgrade_flag) {
             vTaskDelay(pdMS_TO_TICKS(500));
@@ -55,12 +55,12 @@ void iot_send_task(void *pvParameters)
         }
         if (xQueueReceive(message_queue, (void *)&general_message, portMAX_DELAY) == pdPASS) {
             // 发送数据
-            if (iot_interface.iot_send(&general_message) < 0) {
-                LOGE(TAG, "iot send failed, type=%d.", general_message.type);
+            if (iot_interface.iot_send(general_message) < 0) {
+                LOGE(TAG, "iot send failed, type=%d.", general_message->type);
             }
 
             // 释放内存
-            free_general_message(&general_message);
+            free_general_message(general_message);
         }
     }
 

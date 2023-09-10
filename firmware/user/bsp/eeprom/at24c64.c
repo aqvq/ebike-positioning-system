@@ -5,7 +5,7 @@
 #include "main.h"
 #define TAG "AT24C64"
 
-error_t bsp_eeprom_check(void)
+error_t eeprom_check(void)
 {
     storage_iic_start();
     storage_iic_send_byte(STORAGE_DEVICE);
@@ -16,7 +16,7 @@ error_t bsp_eeprom_check(void)
 
 static void bsp_eeprom_write(uint16_t address, uint8_t data)
 {
-    while (bsp_eeprom_check() != OK)
+    while (eeprom_check() != OK)
         ;
 
     uint8_t res = 1;
@@ -38,7 +38,7 @@ static void bsp_eeprom_write(uint16_t address, uint8_t data)
 }
 static uint8_t bsp_eeprom_read(uint16_t address)
 {
-    while (bsp_eeprom_check() != OK)
+    while (eeprom_check() != OK)
         ;
 
     uint8_t res = 1;
@@ -66,7 +66,7 @@ static uint8_t bsp_eeprom_read(uint16_t address)
 static void bsp_eeprom_write_page(uint16_t addr, uint8_t *data, uint8_t len)
 {
     if (len == 0 || len > 32) return;
-    while (bsp_eeprom_check() != OK)
+    while (eeprom_check() != OK)
         ;
     uint8_t res = 1;
     storage_iic_start();
@@ -91,7 +91,7 @@ static void bsp_eeprom_write_page(uint16_t addr, uint8_t *data, uint8_t len)
 static void bsp_eeprom_read_page(uint16_t addr, uint8_t *buffer, uint8_t len)
 {
     if (len == 0 || len > 32) return;
-    while (bsp_eeprom_check() != OK)
+    while (eeprom_check() != OK)
         ;
 
     uint8_t res = 1;
@@ -120,7 +120,7 @@ static void bsp_eeprom_read_page(uint16_t addr, uint8_t *buffer, uint8_t len)
     storage_iic_stop();
 }
 
-error_t bsp_eeprom_write_buffer(uint16_t addr, uint8_t *buffer, uint16_t len)
+error_t eeprom_write(uint16_t addr, uint8_t *buffer, uint16_t len)
 {
     uint16_t end_addr  = addr + len;
     uint16_t next_addr = roundup(addr, 32);
@@ -141,7 +141,7 @@ error_t bsp_eeprom_write_buffer(uint16_t addr, uint8_t *buffer, uint16_t len)
     return OK;
 }
 
-error_t bsp_eeprom_read_buffer(uint16_t addr, uint8_t *buffer, uint16_t len)
+error_t eeprom_read(uint16_t addr, uint8_t *buffer, uint16_t len)
 {
     uint16_t end_addr  = addr + len;
     uint16_t next_addr = roundup(addr, 32);

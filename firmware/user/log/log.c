@@ -28,7 +28,7 @@ void task_print(void *p)
 
     while (1) {
         while (huart2.gState != HAL_UART_STATE_READY) {
-            vTaskDelay(10);
+            vTaskDelay(pdMS_TO_TICKS(10));
         }
         xSemaphoreTake(g_print_mutex, portMAX_DELAY);
         if (xStreamBufferReceive(g_print_buffer, (void *)buffer, LOG_BUF_SIZE, 0) == pdTRUE) {

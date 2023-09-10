@@ -27,8 +27,15 @@ typedef struct
 {
     general_message_type_t type; // 消息类型
     uint16_t data_len;           // 消息长度
-    void *data;                  // 消息，根据消息类型解析
+    uint8_t data[0];             // 可变长消息，根据消息类型解析
 } general_message_t;
+
+/// @brief 创建general_message_t对象
+/// @param type 消息类型
+/// @param data 可变长消息
+/// @param data_len 消息长度
+void *create_general_message(general_message_type_t type, void *data, uint16_t data_len);
+
 /// @brief 释放general_message_t对象
 /// @param msg
 int8_t free_general_message(general_message_t *msg);

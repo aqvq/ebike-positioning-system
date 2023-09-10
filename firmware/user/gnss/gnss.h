@@ -14,7 +14,7 @@
 /// @param
 void gnss_init(void);
 
-/// @brief 使用AT指令查询GPS数据时，响应的回调函数；在【quectel_ec200s_tcp.c】文件中调用
+/// @brief 使用AT指令查询GPS数据时，响应的回调函数；在【quectel_ec800ms_tcp.c】文件中调用
 /// @param rsp
 /// @return
 at_rsp_result_t gnss_nmea_rsp_handler(char *rsp);

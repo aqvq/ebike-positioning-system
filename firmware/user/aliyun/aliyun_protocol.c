@@ -27,13 +27,13 @@
 #include "storage/storage.h"
 #include "aiot_logpost_api.h"
 #include "main/app_config.h"
-#include "protocol/aliyun/aliyun_message_handle.h"
-#include "protocol/aliyun/aliyun_shadow.h"
+#include "aliyun_message_handle.h"
+#include "aliyun/aliyun_shadow.h"
 
 #define RETRY_COUNT (3)
 
 // 关闭EC200模块并重启ESP32, 定义在main中
-extern void ec200_poweroff_and_mcu_restart(void);
+extern void ec800m_poweroff_and_mcu_restart(void);
 
 static const char *TAG = "ALIYUN_PROTOCOL";
 
@@ -69,7 +69,6 @@ static int32_t aliyun_state_logcb(int32_t code, char *message)
 
     LOG("%s", message);
     // LOGI(TAG, "Free Heap Size: %d", xPortGetFreeHeapSize());
-
     return 0;
 }
 
@@ -172,7 +171,7 @@ void aliyun_mqtt_recv_thread(void *args)
                 // 若物联网平台禁用，则该日志可能不可以上传
                 aliyun_iot_post_log(IOT_LOG_LEVEL_WARN, "ALIYUN", res, "aiot_mqtt_recv error, restart");
 
-                ec200_poweroff_and_mcu_restart();
+                ec800m_poweroff_and_mcu_restart();
             }
         }
         vTaskDelay(pdMS_TO_TICKS(10));
@@ -191,7 +190,7 @@ static int32_t aliyun_mqtt_start(void **handle, char *product_key, char *device_
 {
     int32_t res       = STATE_SUCCESS;
     void *mqtt_handle = NULL;
-    char *sysinfo     = "mid=ec200u-cn,os=freertos,cpu=esp32-c3";
+    char *sysinfo     = "mid=ec800mu-cn,os=freertos,cpu=esp32-c3";
     char host[100]    = {0}; /* 用这个数组拼接设备连接的云平台站点全地址, 规则是 ${productKey}.iot-as-mqtt.cn-shanghai.aliyuncs.com */
 
     uint16_t port = MQTT_PORT;
@@ -272,7 +271,7 @@ static int32_t aliyun_mqtt_start(void **handle, char *product_key, char *device_
     if (res < STATE_SUCCESS) {
         LOGE(TAG, "aiot_mqtt_connect failed, restart");
         aiot_mqtt_deinit(&mqtt_handle);
-        ec200_poweroff_and_mcu_restart();
+        ec800m_poweroff_and_mcu_restart();
         return res;
     }
 
@@ -282,7 +281,7 @@ static int32_t aliyun_mqtt_start(void **handle, char *product_key, char *device_
         LOGE(TAG, "create aliyun_mqtt_process_thread failed");
         g_mqtt_process_thread_running = 0;
         aiot_mqtt_deinit(&mqtt_handle);
-        ec200_poweroff_and_mcu_restart();
+        ec800m_poweroff_and_mcu_restart();
         return -1;
     }
 
@@ -295,7 +294,7 @@ static int32_t aliyun_mqtt_start(void **handle, char *product_key, char *device_
         LOGE(TAG, "create aliyun_mqtt_recv_thread failed");
         g_mqtt_recv_thread_running = 0;
         aiot_mqtt_deinit(&mqtt_handle);
-        ec200_poweroff_and_mcu_restart();
+        ec800m_poweroff_and_mcu_restart();
         return -2;
     }
 
@@ -443,7 +442,7 @@ int32_t aliyun_iot_connect(iot_receive_callback func)
     // res = at_hal_init();
     // if (res < STATE_SUCCESS) {
     //     LOGE(TAG, "aliyun protocol at_hal_init failed, restart");
-    //     ec200_poweroff_and_mcu_restart();
+    //     ec800m_poweroff_and_mcu_restart();
     //     return -1;
     // }
 
@@ -460,7 +459,7 @@ int32_t aliyun_iot_connect(iot_receive_callback func)
 
         LOGW(TAG, "dynamic register success, reboot");
 
-        ec200_poweroff_and_mcu_restart(); // 成功动态注册，则重启
+        ec800m_poweroff_and_mcu_restart(); // 成功动态注册，则重启
         return -2;
     }
 

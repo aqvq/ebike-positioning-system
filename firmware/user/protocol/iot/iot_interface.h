@@ -2,7 +2,7 @@
 #define _IOT_INTERFACE_H_
 
 #include <stdint.h>
-#include "msg/general_message.h"
+#include "data/general_message.h"
 
 /**
  * @brief 日志级别枚举类型定义

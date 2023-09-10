@@ -3,8 +3,8 @@
 
 void mcu_restart(void)
 {
-    __disable_irq();    // 关闭中断
-    NVIC_SystemReset(); // 复位
+    __ASM volatile("cpsid i"); // 关中断
+    HAL_NVIC_SystemReset();    // 重启
 }
 
 /**

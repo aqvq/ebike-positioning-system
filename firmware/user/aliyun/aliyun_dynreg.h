@@ -2,7 +2,7 @@
 #ifndef _ALIYUN_DYNREG_H_
 #define _ALIYUN_DYNREG_H_
 
-#include "protocol/aliyun/device_info.h"
+#include "data/device_info.h"
 
 /** 判断设备是否已经注册
  *

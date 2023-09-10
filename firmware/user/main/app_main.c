@@ -11,9 +11,8 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "stream_buffer.h"
-
 #include "log/log.h"
-#include "msg/gateway_config.h"
+#include "data/gateway_config.h"
 #include "app_config.h"
 #include "protocol/host/host_protocol.h"
 #include "cJSON.h"
@@ -30,7 +29,7 @@
 
 static const char *TAG = "MAIN";
 volatile uint32_t ulHighFrequencyTimerTicks;
-char g_ec200_apn_cmd[256];
+char g_ec800m_apn_cmd[256];
 
 //--------------------------------------全局变量---------------------------------------------
 
@@ -39,8 +38,8 @@ gateway_config_t g_gateway_config = {.apn          = "cmiot",
                                      .apn_username = "",
                                      .apn_password = ""};
 
-// EC200模块APN设置AT指令
-char g_ec200_apn_cmd[256];
+// EC800m模块APN设置AT指令
+char g_ec800m_apn_cmd[256];
 
 /* OTA升级标志，定义在main.c中 */
 uint8_t g_app_upgrade_flag = 0;
@@ -75,7 +74,6 @@ void print_welcome_message(void)
 
 static void init_gateway_config(void)
 {
-#if 0 // TODO: Not implemented
     LOGI(TAG, "--- gateway config ---");
 
     int8_t res = read_gateway_config(&g_gateway_config);
@@ -83,16 +81,14 @@ static void init_gateway_config(void)
         LOGI(TAG, "read gateway config failed (%d)", res);
     }
 
-    // EC200模块APN设置AT指令
-    sprintf(g_ec200_apn_cmd, "AT+QICSGP=1,1,\"%s\",\"%s\",\"%s\",1\r\n", g_gateway_config.apn, g_gateway_config.apn_username, g_gateway_config.apn_password);
+    // EC800m模块APN设置AT指令
+    sprintf(g_ec800m_apn_cmd, "AT+QICSGP=1,1,\"%s\",\"%s\",\"%s\",1\r\n", g_gateway_config.apn, g_gateway_config.apn_username, g_gateway_config.apn_password);
 
     LOGI(TAG, "apn=%s", g_gateway_config.apn);
     LOGI(TAG, "apn_username=%s", g_gateway_config.apn_username);
     LOGI(TAG, "apn_password=%s", g_gateway_config.apn_password);
-    // LOGI(TAG, "apn_cmd=%s", g_ec20");
-
+    LOGI(TAG, "apn_cmd=%s", g_ec800m_apn_cmd);
     LOGI(TAG, "----------------------");
-#endif
 }
 
 void cjson_init()
@@ -103,19 +99,13 @@ void cjson_init()
     cJSON_InitHooks(&cJSONhooks_freeRTOS);
 }
 
-void stm32_restart()
-{
-    __ASM volatile("cpsid i"); // 关中断
-    HAL_NVIC_SystemReset();    // 重启
-}
-
-void ec200_poweroff_and_mcu_restart(void)
+void ec800m_poweroff_and_mcu_restart(void)
 {
 #if MQTT_ENABLED || GNSS_ENABLED
-    iot_disconnect();   // 断开连接
+    iot_disconnect();     // 断开连接
     ec800m_at_poweroff(); // 关闭整个4G模块
 #endif
-    stm32_restart();
+    mcu_restart();
 }
 
 void get_running_version(void)
@@ -127,10 +117,9 @@ void get_running_version(void)
     g_patch_version = app_info.version_patch;
 }
 
-void app_main(void)
+error_t storage_init()
 {
-    int8_t err = 0;
-
+    error_t err = OK;
     // 初始化存储
     storage_interface_t storage_interface = {0};
 #if 0
@@ -141,15 +130,21 @@ void app_main(void)
     storage_interface.storage_init_func       = NULL;
 #endif
     storage_interface.storage_base_address    = 0x00;
-    storage_interface.storage_read_data_func  = bsp_eeprom_read_buffer;
-    storage_interface.storage_write_data_func = bsp_eeprom_write_buffer;
-    storage_interface.storage_init_func       = bsp_eeprom_check;
-
-    err = storage_install_interface(&storage_interface);
+    storage_interface.storage_read_data_func  = eeprom_read;
+    storage_interface.storage_write_data_func = eeprom_write;
+    storage_interface.storage_init_func       = eeprom_check;
+    err                                       = storage_install_interface(&storage_interface);
     if (err != OK) {
         LOGD(TAG, "storage init failed: %s", error_string(err));
     }
+    return err;
+}
 
+void app_main(void)
+{
+    int8_t err = 0;
+    // 初始化存储模块
+    storage_init();
     // 初始化cjosn库
     cjson_init();
     // 初始化网关参数
@@ -158,19 +153,29 @@ void app_main(void)
     get_running_version();
     // 打印开机信息
     print_welcome_message();
+    // 初始化设备
+    ec800m_init();
+    // 初始化网络
+    at_hal_init();
+
 #if UART_GATEWAY_CONFIG_ENABLED
     xTaskCreate(uart_gateway_config_task, UART_GATEWAY_CONFIG_TASK_NAME, UART_GATEWAY_CONFIG_TASK_DEPTH, NULL, 3, NULL);
 #endif
 
-#if GNSS_ENABLED || MQTT_ENABLED
+#if MQTT_ENABLED
     // 初始化4G模块
-    // xTaskCreate(task_4g, "at_init", 5120, NULL, 3, NULL);
+    iot_connect();
+    // xTaskCreate(iot_connect, "mqtt", 5120, NULL, 3, NULL);
+#endif
+
+#if GNSS_ENABLED
+    gnss_init();
+    // xTaskCreate(gnss_init, "gnss", 1024, NULL, 3, NULL);
 #endif
 
 #if HOST_ENABLED
     xTaskCreate(host_protocol_task, HOST_PROTOCOL_TASK_NAME, 512, NULL, 3, NULL);
 #endif
-
     vTaskDelete(NULL);
 }
 

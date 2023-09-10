@@ -4,12 +4,6 @@
  * @LastEditTime: 2023-08-31 17:44:38
  * @FilePath: \firmware\user\partition\iap.c
  */
-/*
- * @Date: 2023-08-31 15:54:25
- * @LastEditors: ShangWentao shangwentao
- * @LastEditTime: 2023-08-31 17:08:27
- * @FilePath: \firmware\user\partition\iap.c
- */
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -19,7 +13,7 @@
 #include "log/log.h"
 #include "storage/storage.h"
 #include "iap.h"
-#include "partition_info.h"
+#include "data/partition_info.h"
 
 #define TAG                "UPDATE"
 #define UPDATE_BUFFER_SIZE 1024

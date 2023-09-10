@@ -3,7 +3,7 @@
 #define __UPDATE_H
 
 #include "error_type.h"
-#include "partition/partition_info.h"
+#include "data/partition_info.h"
 #include "utils/macros.h"
 
 #ifdef STM32F407xx

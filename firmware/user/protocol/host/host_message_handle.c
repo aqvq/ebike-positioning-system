@@ -75,8 +75,12 @@ static void to_json_string(cJSON *root, char *output, uint8_t *output_len)
     char *json_string      = cJSON_PrintUnformatted(root);
     size_t json_string_len = strlen(json_string);
 
-    *output_len = (uint8_t)json_string_len;
-    memcpy((void *)output, (void *)json_string, json_string_len);
+    if (output) {
+        memcpy((void *)output, (void *)json_string, json_string_len);
+        if (output_len) {
+            *output_len = (uint8_t)json_string_len;
+        }
+    }
 
     vPortFree(json_string);
 }
@@ -275,4 +279,3 @@ static cJSON *create_cjson_root_with_gnss_nmea_data(void *data)
 
     return root;
 }
-

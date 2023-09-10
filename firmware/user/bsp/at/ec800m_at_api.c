@@ -50,7 +50,7 @@ uint8_t tcp_connect_state = 0;
 // } gnss_response_t;
 
 // APN参数，由main.c设定
-extern char g_ec200_apn_cmd[256];
+extern char g_ec800m_apn_cmd[256];
 
 extern core_at_handle_t at_handle;
 // GNSS定位NMEA数据
@@ -746,7 +746,7 @@ static core_at_cmd_item_t at_ip_init_cmd_table[] = {
     //     // <username> 字符串类型。用户名。最大长度：127 字节。
     //     // <password> 字符串类型。密码。最大长度：127 字节。
     //     // <authentication> 整型。APN 鉴权方式。0 None 1 PAP 2 CHAP
-    //     .cmd = g_ec200_apn_cmd, //"AT+QICSGP=1,1,\"cmiot\",\"\",\"\",1\r\n",
+    //     .cmd = g_ec800m_apn_cmd, //"AT+QICSGP=1,1,\"cmiot\",\"\",\"\",1\r\n",
     //     .rsp = "OK",
     // },
     // {   /* 去场景激活 */

@@ -2,12 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-
-// #include "esp_system.h"
-// #include "nvs_flash.h"
-// #include "nvs.h"
 #include "aiot_state_api.h"
-// #include "aiot_sysdep_api.h"
 #include "aiot_dynregmq_api.h"
 #include "dynregmq_private.h"
 #include "log/log.h"
@@ -16,8 +11,9 @@
 #include "aliyun_dynreg.h"
 #include "storage/storage.h"
 #include "FreeRTOS.h"
-#include "protocol/aliyun/device_info.h"
+#include "data/device_info.h"
 #include "error_type.h"
+#include "data/device_info.h"
 
 static const char *TAG = "DYN_REG";
 
@@ -136,6 +132,7 @@ int8_t read_device_info()
     return -2;
 }
 #endif
+
 uint8_t is_registered()
 {
     devinfo_wl_t device;
@@ -346,7 +343,7 @@ int8_t dynamic_register()
     if (skip_pre_regist == 0) {
         LOGI(TAG, "device secret: %s", devinfo_wl.device_secret);
     } else {
-#if 0 
+#if 0
         LOGI(TAG, "clientid: %s", devinfo_nwl.conn_clientid);
         LOGI(TAG, "conn_username: %s", devinfo_nwl.conn_username);
         LOGI(TAG, "conn_password: %s", devinfo_nwl.conn_password);
