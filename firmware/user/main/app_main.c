@@ -19,7 +19,7 @@
 #include "storage/storage.h"
 #include "protocol/iot/iot_helper.h"
 #include "aiot_at_api.h"
-#include "bsp/at/ec800m_at_api.h"
+#include "bsp/at/at.h"
 #include "app_main.h"
 #include "protocol/uart/uart_gateway_config.h"
 #include "gnss/gnss.h"
@@ -43,7 +43,6 @@ char g_ec800m_apn_cmd[256];
 
 /* OTA升级标志，定义在main.c中 */
 uint8_t g_app_upgrade_flag = 0;
-char g_device_name[20]     = {0};
 
 /* 传感器BLE包数计数(MQTT通讯有效),定义在main.c中 */
 uint16_t g_ble_num_mqtt = 0;

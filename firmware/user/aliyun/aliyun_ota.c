@@ -7,7 +7,7 @@
 
 #include "aiot_mqtt_api.h"
 #include "aiot_at_api.h"
-#include "bsp/at/ec800m_at_api.h"
+#include "bsp/at/at.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
@@ -25,7 +25,7 @@
 #include "error_type.h"
 #include "utils/macros.h"
 #include "bsp/mcu/mcu.h"
-#include "bsp/at/ec800m_at_api.h"
+#include "bsp/at/at.h"
 
 static const char *TAG = "ALIYUN_OTA";
 

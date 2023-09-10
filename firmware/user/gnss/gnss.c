@@ -3,7 +3,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "aiot_at_api.h"
-#include "bsp/at/ec800m_at_api.h"
+#include "bsp/at/at.h"
 #include "aiot_state_api.h"
 #include "utils/linked_list.h"
 #include "log/log.h"
@@ -15,7 +15,7 @@
 #include "data/general_message.h"
 #include "protocol/iot/iot_helper.h"
 #include "main/app_main.h"
-#include "bsp/at/ec800m_at_api.h"
+#include "bsp/at/at.h"
 
 //-------------------------------------全局变量-------------------------------------------------------------
 #define GPS_DATA      (1)
@@ -28,10 +28,7 @@ extern linked_list_t *gnss_response_list;
 static const char *TAG = "GNSS";
 
 // 定位字符串，quectel_ec800ms_tcp.c
-extern char gnss_string[128];
-
-/* GNSS模块状态: 1-打开 0-关闭 */
-extern uint8_t gnss_state;
+char gnss_string[128];
 
 // 全局变量，记录gnss数据
 static gnss_nmea_data_t _gnss_nmea_data;
@@ -689,7 +686,7 @@ void gnss_task(void *pvParameters)
         }
 #else
         // 回调函数中，全部数据获取并且数据被正确解析
-        if (ec800m_at_gnss_nema_query() == 0) {
+        if (ec800m_at_gnss_nmea_query() == 0) {
             // 向订阅的任务推送数据
             general_message_to_queue();
         }
@@ -704,6 +701,7 @@ void gnss_task(void *pvParameters)
 void gnss_init(void)
 {
     do {
+        uint8_t gnss_state;
         int32_t res = STATE_SUCCESS;
         res         = ec800m_at_gnss_close();
         if (res >= 0) {
@@ -711,9 +709,9 @@ void gnss_init(void)
         }
 
         // 查询GNSS是否打开
-        res = ec800m_at_gnss_state();
+        res = ec800m_at_gnss_state(&gnss_state);
 
-        if (res >= 0 && gnss_state == 1) {
+        if (res == STATE_SUCCESS && gnss_state == 1) {
             LOGW(TAG, "gnss is open.");
         } else {
 #if AGPS_ENABLE
@@ -745,9 +743,9 @@ void gnss_init(void)
                     break;
                 }
 
-                res = ec800m_at_gnss_nema_enable();
+                res = ec800m_at_gnss_nmea_enable();
                 if (res < 0) {
-                    LOGE(TAG, "open gnss nema failed, error code: %d", res);
+                    LOGE(TAG, "open gnss nmea failed, error code: %d", res);
                     break;
                 }
                 LOGI(TAG, "enable agps");

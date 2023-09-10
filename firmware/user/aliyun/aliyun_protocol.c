@@ -16,7 +16,7 @@
 #include "aiot_state_api.h"
 #include "aiot_sysdep_api.h"
 #include "aiot_mqtt_api.h"
-#include "bsp/at/ec800m_at_api.h"
+#include "bsp/at/at.h"
 #include "aiot_at_api.h"
 #include "aiot_ota_api.h"
 #include "utils/util.h"

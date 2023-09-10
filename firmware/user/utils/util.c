@@ -6,10 +6,9 @@
 #include "common_config.h"
 #include "aiot_state_api.h"
 #include "storage/storage.h"
+#include "bsp/at/at.h"
 
 #define TAG "UTILITY"
-
-extern char g_device_name[20];
 
 uint8_t is_telink_mac(const uint8_t *mac)
 {
@@ -91,22 +90,23 @@ void mac_to_str(const uint8_t *mac, const char delimiter, char *output, uint8_t 
     }
 }
 
-char* get_device_name()
+char *get_device_name()
 {
-    if (g_device_name[0] != 0) {
-        return g_device_name;
+    static char device_name[20] = {0};
+    if (device_name[0] != 0) {
+        return device_name;
     }
 
     devinfo_wl_t device = {0};
     int8_t err          = read_device_info(&device);
-    if (err == 0) {
+    if (err == OK) {
         if (device.device_name[0] == 0xFF) {
-            if (ec800m_at_get_imei() == STATE_SUCCESS && g_device_name[0] != 0) {
-                return g_device_name;
+            if (ec800m_at_imei(device_name) == STATE_SUCCESS && device_name[0] != 0) {
+                return device_name;
             }
         }
-        strcpy(g_device_name, device.device_name);
-        return g_device_name;
+        strcpy(device_name, device.device_name);
+        return device_name;
     } else {
         return NULL;
     }

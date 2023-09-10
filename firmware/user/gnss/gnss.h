@@ -3,7 +3,7 @@
 #define _GNSS_H_
 
 #include "aiot_at_api.h"
-#include "bsp/at/ec800m_at_api.h"
+#include "bsp/at/at.h"
 #include "minmea.h"
 #include "FreeRTOS.h"
 #include "queue.h"

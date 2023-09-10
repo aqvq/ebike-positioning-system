@@ -3,7 +3,7 @@
 #include "aiot_at_api.h"
 #include "os_net_interface.h"
 #include <string.h>
-#include "ec800m_at_api.h"
+#include "bsp/at/at.h"
 #include "bsp/mcu/mcu.h"
 
 /*huart1 for at module*/
