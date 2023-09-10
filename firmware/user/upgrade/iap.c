@@ -15,17 +15,8 @@
 #include "iap.h"
 #include "data/partition_info.h"
 
-#define TAG                "UPDATE"
-#define UPDATE_BUFFER_SIZE 1024
-#define UPDATE_TIMEOUT     3000
-
-uint8_t g_update_flag           = 0;
+#define TAG                "UPGRADE"
 static uint32_t write_address   = 0;
-static uint8_t sector_map[2][2] = {
-    // 起始扇区，扇区数量
-    {2, 6},
-    {8, 4},
-};
 
 error_t iap_update_partition(app_info_t *new)
 {

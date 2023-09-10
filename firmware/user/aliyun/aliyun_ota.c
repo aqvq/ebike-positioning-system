@@ -264,7 +264,7 @@ static void aliyun_ota_task(void *pvParameters)
                 } else {
                     LOGE(TAG, "app_info.id error!");
                 }
-                strcpy(app_info.note, "aliyun");
+                strcpy(app_info.note, "aliyun ota");
                 iap_update_partition(&app_info);
                 if (err != OK) {
                     LOGE(TAG, "esp_ota_set_boot_partition failed!");

@@ -50,6 +50,8 @@ uint8_t tcp_connect_state = 0;
 // } gnss_response_t;
 
 // APN参数，由main.c设定
+extern char g_device_name[20];
+
 extern char g_ec800m_apn_cmd[256];
 
 extern core_at_handle_t at_handle;
@@ -80,6 +82,7 @@ static at_rsp_result_t gnss_rsp_handler(char *rsp);
 static at_rsp_result_t gnss_state_rsp_handler(char *rsp);
 static at_rsp_result_t context_state_rsp_handler(char *rsp);
 static at_rsp_result_t tcp_state_rsp_handler(char *rsp);
+static at_rsp_handler_t gnss_get_imei_cmd_handler(char *rsp);
 
 /********************************************************************
  * 基本命令定义
@@ -557,6 +560,29 @@ int32_t ec800m_at_tcp_close(void)
     return res;
 }
 
+int32_t ec800m_at_get_imei()
+{
+#define gnss_get_imei_cmd "AT+CGSN\r\n"
+    const static core_at_cmd_item_t at_gnss_get_imei_cmd_table[] = {
+        {
+            /* 禁用通过 AT+QGPSGNME 获取 NMEA 语句 */
+            .cmd     = gnss_get_imei_cmd,
+            .rsp     = "OK",
+            .cmd_len = strlen(gnss_get_imei_cmd) - 1,
+            .handler = gnss_get_imei_cmd_handler,
+        },
+    };
+
+    int32_t res = STATE_SUCCESS;
+    if (at_handle.is_init != 1) {
+        return STATE_AT_NOT_INITED;
+    }
+
+    res = core_at_commands_send_sync(at_gnss_get_imei_cmd_table, array_size(at_gnss_get_imei_cmd_table));
+
+    return res;
+}
+
 /********************************************************************
  * 命令回调函数定义
  *********************************************************************/
@@ -651,6 +677,25 @@ static at_rsp_result_t context_state_rsp_handler(char *rsp)
     }
 
     return AT_RSP_SUCCESS;
+}
+
+static at_rsp_handler_t gnss_get_imei_cmd_handler(char *rsp)
+{
+    char *ptr     = rsp;
+    if (rsp != NULL) {
+        LOGD(TAG, "%s", rsp);
+        while (*ptr >= '0' && *ptr <= '9')
+            ptr++;
+        if (ptr - rsp < 20) {
+            memcpy(g_device_name, rsp, ptr - rsp);
+            g_device_name[ptr - rsp] = '\0';
+            LOGI(TAG, "IMEI = %s", g_device_name);
+            return AT_RSP_SUCCESS;
+        } else {
+            LOGE(TAG, "Array Overflow");
+        }
+    }
+    return AT_RSP_FAILED;
 }
 
 /// @brief 查询TCP状态回调函数

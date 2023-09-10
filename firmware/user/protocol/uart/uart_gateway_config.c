@@ -50,15 +50,15 @@ error_t parse_set_appinfo(const char *input, char *output);
 
 static uart_cmd_t uart_cmd[] = {
     {.command_type = "GET", .data_type = "GATEWAYCONFIG", .parse_function = &parse_get_gateway_config},
-    {.command_type = "GET", .data_type = "DEVICEINFO", .parse_function = &parse_get_device_info},
-    {.command_type = "GET", .data_type = "GATEWAYINFO", .parse_function = &parse_get_gateway_info},
     {.command_type = "SET", .data_type = "GATEWAYCONFIG", .parse_function = &parse_set_gateway_config},
+    {.command_type = "GET", .data_type = "DEVICEINFO", .parse_function = &parse_get_device_info},
     {.command_type = "SET", .data_type = "DEVICEINFO", .parse_function = &parse_set_device_info},
+    {.command_type = "GET", .data_type = "APPINFO", .parse_function = &parse_get_appinfo},
+    {.command_type = "SET", .data_type = "APPINFO", .parse_function = &parse_set_appinfo},
+    {.command_type = "GET", .data_type = "GATEWAYINFO", .parse_function = &parse_get_gateway_info},
     {.command_type = "RESTART", .data_type = "STRING", .parse_function = &parse_restart},
     {.command_type = "SWITCH", .data_type = "STRING", .parse_function = &parse_switch},
     {.command_type = "ROLLBACK", .data_type = "STRING", .parse_function = &parse_rollback},
-    {.command_type = "GET", .data_type = "APPINFO", .parse_function = &parse_get_appinfo},
-    {.command_type = "SET", .data_type = "APPINFO", .parse_function = &parse_set_appinfo},
     {0, 0, 0}, // TODO: 以0结尾的方式比较灵活，后续可以传入指针
 
 };
@@ -134,8 +134,8 @@ void uart_gateway_config_task(void *pvParameters)
             LOGE(TAG, "uart stream buffer not init");
             Error_Handler();
         }
-        extern uint8_t g_update_flag;
-        if (g_update_flag != 0) {
+        extern uint8_t g_app_upgrade_flag;
+        if (g_app_upgrade_flag != 0) {
             vTaskDelay(pdMS_TO_TICKS(1000));
             continue;
         }

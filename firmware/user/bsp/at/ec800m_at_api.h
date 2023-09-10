@@ -17,7 +17,7 @@ int32_t ec800m_at_gnss_nema_enable();
 int32_t ec800m_at_gnss_nema_disable();
 int32_t ec800m_at_gnss_nema_query();
 int32_t ec800m_at_tcp_close();
+int32_t ec800m_at_get_imei();
 error_t ec800m_init();
-
 
 #endif

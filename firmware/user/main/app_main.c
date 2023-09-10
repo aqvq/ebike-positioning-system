@@ -43,6 +43,7 @@ char g_ec800m_apn_cmd[256];
 
 /* OTA升级标志，定义在main.c中 */
 uint8_t g_app_upgrade_flag = 0;
+char g_device_name[20]     = {0};
 
 /* 传感器BLE包数计数(MQTT通讯有效),定义在main.c中 */
 uint16_t g_ble_num_mqtt = 0;

@@ -6,10 +6,11 @@
 /* 白名单模式下用于保存deviceSecret的结构体定义 */
 typedef struct
 {
-    char device_name[16];
+    char device_name[20];
     char device_secret[64];
 } devinfo_wl_t;
 
+// not used
 /* 免白名单模式下用于保存mqtt建连信息clientid, username和password的结构体定义 */
 typedef struct
 {
