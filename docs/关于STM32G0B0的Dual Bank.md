@@ -22,17 +22,17 @@
 
 
 
-![image-20230909110159666](C:/Users/shang/AppData/Roaming/Typora/typora-user-images/image-20230909110159666.png)
+![image-20230909110159666](http://img.juzaizai.com/202309112008218.png)
 
 Flash memory address: 0x1FFF 7800
 
 Reset value: 0xDFFF E1AA (ST production value)
 
-![image-20230909110341410](C:/Users/shang/AppData/Roaming/Typora/typora-user-images/image-20230909110341410.png)
+![image-20230909110341410](http://img.juzaizai.com/202309112008491.png)
 
-![image-20230909110354252](C:/Users/shang/AppData/Roaming/Typora/typora-user-images/image-20230909110354252.png)
+![image-20230909110354252](http://img.juzaizai.com/202309112008312.png)
 
-![image-20230909110427805](C:/Users/shang/AppData/Roaming/Typora/typora-user-images/image-20230909110427805.png)
+![image-20230909110427805](http://img.juzaizai.com/202309112008305.png)
 
 - nSWAP_BANK = 1 ==> BANK1 is mapped at 0x0800_0000
 - nSWAP_BANK = 0 ==> BANK2 is mapped at 0x0800_0000
