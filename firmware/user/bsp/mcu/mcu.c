@@ -1,10 +1,17 @@
 #include "main.h"
 #include "mcu.h"
+#include "bsp/flash/boot.h"
 
 void mcu_restart(void)
 {
     __ASM volatile("cpsid i"); // 关中断
     HAL_NVIC_SystemReset();    // 重启
+}
+
+void mcu_init(void)
+{
+    boot_configure_boot_from_flash();
+    boot_enable_dual_bank();
 }
 
 /**

@@ -19,6 +19,7 @@
 #include "task.h"
 #include "data/device_info.h"
 #include "data/partition_info.h"
+#include "bsp/flash/boot.h"
 #include "data/gnss_settings.h"
 
 static const char *TAG = "UART_GATEWAY_CONFIG";
@@ -50,6 +51,7 @@ error_t parse_get_appinfo(const char *input, char *output);
 error_t parse_set_appinfo(const char *input, char *output);
 error_t parse_get_gnss_settings(const char *input, char *output);
 error_t parse_set_gnss_settings(const char *input, char *output);
+error_t parse_upgrade(const char *input, char *output);
 
 static uart_cmd_t uart_cmd[] = {
     {.command_type = "GET", .data_type = "GATEWAYCONFIG", .parse_function = &parse_get_gateway_config},
@@ -64,8 +66,8 @@ static uart_cmd_t uart_cmd[] = {
     {.command_type = "RESTART", .data_type = "STRING", .parse_function = &parse_restart},
     {.command_type = "SWITCH", .data_type = "STRING", .parse_function = &parse_switch},
     {.command_type = "ROLLBACK", .data_type = "STRING", .parse_function = &parse_rollback},
+    {.command_type = "UPGRADE", .data_type = "STRING", .parse_function = &parse_upgrade},
     {0, 0, 0}, // TODO: 以0结尾的方式比较灵活，后续可以传入指针
-
 };
 
 //========================================================================================================
@@ -369,7 +371,7 @@ error_t parse_set_appinfo(const char *input, char *output)
         strcpy(output, "");
         return 0;
     } else {
-        strcpy(output, "write app info fail");
+        strcpy(output, "write app info failed");
         printf("error: %d\n", res);
         return -1;
     }
@@ -399,9 +401,22 @@ error_t parse_set_gnss_settings(const char *input, char *output)
         strcpy(output, "");
         return 0;
     } else {
-        strcpy(output, "write gnss settings fail");
+        strcpy(output, "write gnss settings failed");
         printf("error: %d\n", res);
         return -1;
     }
     return 0;
+}
+
+error_t parse_upgrade(const char *input, char *output)
+{
+    LOGI("Upgrade program, about to start from bootloader...");
+    error_t err = boot_configure_boot_from_bootloader();
+    if (err != OK) {
+        strcpy(output, "boot configure failed");
+        printf("error: %d\n", res);
+        return -1;
+    }
+    mcu_restart();
+    return 0; // Will not be executed here
 }

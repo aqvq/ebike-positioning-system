@@ -1,8 +1,8 @@
 #include "main.h"
 #include "boot.h"
 
+error_t boot_configure_boot_from_bootloader(void)
 // boot mode configuration
-error_t boot_configure_boot_mode(void)
 {
     FLASH_OBProgramInitTypeDef optionsbytesstruct;
     error_t check_flag = OK;
@@ -40,6 +40,41 @@ error_t boot_configure_boot_mode(void)
     }
     return check_flag;
 }
+
+// boot mode configuration
+error_t boot_configure_boot_from_flash(void)
+{
+    FLASH_OBProgramInitTypeDef optionsbytesstruct;
+    error_t check_flag = OK;
+
+    HAL_FLASHEx_OBGetConfig(&optionsbytesstruct);
+    uint32_t userconfig = optionsbytesstruct.USERConfig;
+
+    // set nBOOT_SEL
+    if ((userconfig & FLASH_OPTR_nBOOT_SEL_Msk) != OB_BOOT0_FROM_OB) {
+        userconfig |= OB_BOOT0_FROM_OB;
+        check_flag = DATA_MODIFIED;
+    }
+
+    // set nBOOT0
+    if ((userconfig & FLASH_OPTR_nBOOT0_Msk) != OB_nBOOT0_SET) {
+        userconfig |= OB_nBOOT0_SET;
+        check_flag = DATA_MODIFIED;
+    }
+
+    // write configuration
+    if (check_flag == DATA_MODIFIED) {
+        optionsbytesstruct.USERConfig = userconfig;
+        HAL_FLASH_Unlock();
+        HAL_FLASH_OB_Unlock();
+        HAL_FLASHEx_OBProgram(&optionsbytesstruct);
+        HAL_FLASH_OB_Launch();
+        HAL_FLASH_OB_Lock();
+        HAL_FLASH_Lock();
+    }
+    return check_flag;
+}
+
 
 // enable dual bank
 error_t boot_enable_dual_bank(void)

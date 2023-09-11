@@ -144,6 +144,8 @@ error_t storage_init()
 void app_main(void)
 {
     int8_t err = 0;
+    // 初始化mcu
+    mcu_init();
     // 初始化存储模块
     storage_init();
     // 初始化cjosn库
