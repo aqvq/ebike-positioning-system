@@ -39,7 +39,7 @@ uint8_t is_mac_equal(const uint8_t *mac_a, const uint8_t *mac_b);
 void mac_to_str(const uint8_t *mac, const char delimiter, char *output, uint8_t *output_len);
 
 /**
- * @brief 获取设备名(设备名就是mac地址的大写字符串)
+ * @brief 获取设备名
  *
  * @return char*
  */

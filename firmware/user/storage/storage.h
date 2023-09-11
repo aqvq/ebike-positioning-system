@@ -14,6 +14,7 @@
 #include "data/device_info.h"
 #include "log/log.h"
 #include "data/partition_info.h"
+#include "data/gnss_settings.h"
 #include "utils/macros.h"
 
 #define STORAGE_DEVICE_INIT_FLAG (0x7E)
@@ -36,6 +37,7 @@ typedef struct {
     devinfo_wl_t aliyun_devinfo_wl;   // 阿里云白名单登录参数
     devinfo_nwl_t aliyun_devinfo_nwl; // 阿里云免白名单登录参数
     gateway_config_t gateway_config;  // 网关配置参数
+    gnss_settings_t gnss_settings;    // 卫星定位参数
 } storage_data_t;
 
 typedef error_t (*storage_read_data_func_t)(uint32_t, uint8_t *, uint32_t);

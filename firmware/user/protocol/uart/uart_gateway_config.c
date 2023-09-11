@@ -19,6 +19,7 @@
 #include "task.h"
 #include "data/device_info.h"
 #include "data/partition_info.h"
+#include "data/gnss_settings.h"
 
 static const char *TAG = "UART_GATEWAY_CONFIG";
 #define UART_GATEWAY_CONFIG_NUM UART_NUM_0
@@ -47,6 +48,8 @@ error_t parse_switch(const char *input, char *output);
 error_t parse_rollback(const char *input, char *output);
 error_t parse_get_appinfo(const char *input, char *output);
 error_t parse_set_appinfo(const char *input, char *output);
+error_t parse_get_gnss_settings(const char *input, char *output);
+error_t parse_set_gnss_settings(const char *input, char *output);
 
 static uart_cmd_t uart_cmd[] = {
     {.command_type = "GET", .data_type = "GATEWAYCONFIG", .parse_function = &parse_get_gateway_config},
@@ -55,6 +58,8 @@ static uart_cmd_t uart_cmd[] = {
     {.command_type = "SET", .data_type = "DEVICEINFO", .parse_function = &parse_set_device_info},
     {.command_type = "GET", .data_type = "APPINFO", .parse_function = &parse_get_appinfo},
     {.command_type = "SET", .data_type = "APPINFO", .parse_function = &parse_set_appinfo},
+    {.command_type = "GET", .data_type = "GNSS", .parse_function = &parse_get_gnss_settings},
+    {.command_type = "SET", .data_type = "GNSS", .parse_function = &parse_set_gnss_settings},
     {.command_type = "GET", .data_type = "GATEWAYINFO", .parse_function = &parse_get_gateway_info},
     {.command_type = "RESTART", .data_type = "STRING", .parse_function = &parse_restart},
     {.command_type = "SWITCH", .data_type = "STRING", .parse_function = &parse_switch},
@@ -365,6 +370,36 @@ error_t parse_set_appinfo(const char *input, char *output)
         return 0;
     } else {
         strcpy(output, "write app info fail");
+        printf("error: %d\n", res);
+        return -1;
+    }
+    return 0;
+}
+
+error_t parse_get_gnss_settings(const char *input, char *output)
+{
+    // 发送数据序列化为JSON字符串
+    int8_t res = read_gnss_settings_text(output); // 从FLASH读取配置
+    if (res == 0) {
+        return 0;
+    } else {
+        // 读取失败，可能时FLASH中无该信息
+        strcpy(output, "read gnss settings error");
+        return -1;
+    }
+}
+
+error_t parse_set_gnss_settings(const char *input, char *output)
+{
+    printf("valuestring=%s\r\n", input);
+
+    // 写FLASH
+    int8_t res = write_gnss_settings_text(input);
+    if (res == 0) {
+        strcpy(output, "");
+        return 0;
+    } else {
+        strcpy(output, "write gnss settings fail");
         printf("error: %d\n", res);
         return -1;
     }

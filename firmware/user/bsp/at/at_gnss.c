@@ -196,3 +196,49 @@ int32_t ec800m_at_gnss_location()
 
     return res;
 }
+
+/**
+ * @brief GNSS 定位设置
+ * @param mode
+ * 0 GPS
+ * 1 GPS + BeiDou
+ * 3 GPS + GLONASS + Galileo
+ * 4 GPS + GLONASS
+ * 5 GPS + BeiDou + Galileo
+ * 6 GPS + Galileo
+ * 7 BeiDou
+ * @return int32_t
+ */
+int32_t ec800m_at_gnss_config(uint8_t mode)
+{
+    /* 配置支持的 GNSS 卫星导航系统 */
+#define gnss_config_cmd "AT+QGPSCFG=\"gnssconfig\",%d\r\n"
+
+    char tmp[AIOT_AT_CMD_LEN_MAXIMUM]                    = {0};
+    static core_at_cmd_item_t at_gnss_config_cmd_table[] = {
+        {
+            .fmt        = gnss_config_cmd,
+            .rsp        = "OK",
+            .timeout_ms = 300,
+        },
+    };
+
+    for (int i = 0; i < array_size(at_gnss_config_cmd_table); i++) {
+        if (at_gnss_config_cmd_table[i].fmt != NULL) {
+            snprintf(tmp, sizeof(tmp), at_gnss_config_cmd_table[i].fmt, mode);
+            at_gnss_config_cmd_table[i].cmd     = tmp;
+            at_gnss_config_cmd_table[i].cmd_len = strlen(tmp);
+        }
+    }
+
+    int32_t res = STATE_SUCCESS;
+    if (at_handle.is_init != 1) {
+        return STATE_AT_NOT_INITED;
+    }
+
+    res = core_at_commands_send_sync(at_gnss_config_cmd_table, array_size(at_gnss_config_cmd_table));
+
+    return res;
+}
+
+

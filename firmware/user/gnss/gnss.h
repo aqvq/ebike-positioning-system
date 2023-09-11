@@ -8,7 +8,10 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 
-#define AGPS_ENABLE (0)
+#define AGPS_ENABLE (1)
+#define APFLASH_ENABLE (1)
+#define AUTOGPS_ENABLE (1)
+#define GNSS_MODE (5)
 
 /// @brief GNSS初始化
 /// @param

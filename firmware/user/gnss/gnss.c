@@ -36,9 +36,6 @@ static gnss_nmea_data_t _gnss_nmea_data;
 /* OTA升级标志，定义在main.c中 */
 extern uint8_t g_app_upgrade_flag;
 
-/* 移远模块设备类型,定义在aiot_at_api.c文件中 */
-extern char QuectelDeviceType[20];
-
 //------------------------------- 订阅相关的参数 ---------------------------------------------------------
 #define MAX_SUBSCRIBER_COUNT (10)                       // 订阅队列的上限
 static uint8_t subscriber_count;                        // 订阅数量
@@ -421,7 +418,7 @@ int app_ble_4g_mqtt_pub_gnss(void *handle, char *gnss_string)
 #endif
 
     pub_payload = cJSON_Print(root);
-    sprintf(pub_topic, "/%s/%s/%s/%s", PRODUCT_KEY, get_device_name(), "user", "gps");
+    sprintf(pub_topic, "/%s/%s/%s/%s", PRODUCT_KEY, get_device_name(), "user", "gnss");
 
     if (NULL == handle)
     {
@@ -700,13 +697,14 @@ void gnss_task(void *pvParameters)
 
 void gnss_init(void)
 {
+    uint8_t retry = 5;
     do {
         uint8_t gnss_state;
         int32_t res = STATE_SUCCESS;
-        res         = ec800m_at_gnss_close();
-        if (res >= 0) {
-            LOGW(TAG, "gnss is closed.");
-        }
+        // res         = ec800m_at_gnss_close();
+        // if (res >= 0) {
+        //     LOGW(TAG, "gnss is closed.");
+        // }
 
         // 查询GNSS是否打开
         res = ec800m_at_gnss_state(&gnss_state);
@@ -715,42 +713,58 @@ void gnss_init(void)
             LOGW(TAG, "gnss is open.");
         } else {
 #if AGPS_ENABLE
-            if (strstr(QuectelDeviceType, "EC200U")) // 当是EC200U时，启动AGPS功能
-            {
-                res = ec800m_at_gnss_agps_open();
+            // 打开AGPS，重启生效
+            uint8_t agps_state = 0;
+            res                = ec800m_at_gnss_agps_state(&agps_state);
+            if (res == STATE_SUCCESS && agps_state == 0) {
+                // AGPS处于关闭状态
+                res = ec800m_at_gnss_enable_agps();
                 if (res < 0) {
                     LOGE(TAG, "open agps failed, error code: %d", res);
-                    vTaskDelay(pdMS_TO_TICKS(1000 / portTICK_RATE_MS);
+                    vTaskDelay(pdMS_TO_TICKS(1000 / portTICK_RATE_MS));
                     continue;
                 }
-            } else {
-                LOGW(TAG, "Do not open AGPS function.");
             }
 #endif
-
+#if AUTOGPS_ENABLE
+            // 打开autogps，重启生效
+            uint8_t autogps_state = 0;
+            res                   = ec800m_at_gnss_autogps_state(&autogps_state);
+            if (res == STATE_SUCCESS && autogps_state == 0) {
+                res = ec800m_at_gnss_enable_autogps();
+                if (res < 0) {
+                    LOGE(TAG, "open autogps failed, error code: %d", res);
+                    vTaskDelay(pdMS_TO_TICKS(1000 / portTICK_RATE_MS));
+                    continue;
+                }
+            }
+#endif
+            // 打开GNSS
             res = ec800m_at_gnss_open();
             if (res < 0) {
                 LOGE(TAG, "open gnss failed, error code: %d", res);
-                break;
+                continue;
             }
+        }
 
-#if AGPS_ENABLE
-            if (strstr(QuectelDeviceType, "EC200U")) // 当是EC200U时，启动AGPS功能
-            {
-                res = ec800m_at_gnss_agps_download();
-                if (res < 0) {
-                    LOGE(TAG, "apgs download failed, error code: %d", res);
-                    break;
-                }
-
-                res = ec800m_at_gnss_nmea_enable();
-                if (res < 0) {
-                    LOGE(TAG, "open gnss nmea failed, error code: %d", res);
-                    break;
-                }
-                LOGI(TAG, "enable agps");
+#if APFLASH_ENABLE
+        // 打开APFLASH，立即生效
+        uint8_t apflash_state = 0;
+        res                   = ec800m_at_gnss_apflash_state(&apflash_state);
+        if (res == STATE_SUCCESS && apflash_state == 0) {
+            res = ec800m_at_gnss_enable_apflash();
+            if (res < 0) {
+                LOGE(TAG, "open apflash failed, error code: %d", res);
+                vTaskDelay(pdMS_TO_TICKS(1000 / portTICK_RATE_MS));
+                continue;
             }
+        }
 #endif
+        // 立即生效
+        res = ec800m_at_gnss_config(GNSS_MODE);
+        if (res < 0) {
+            LOGE(TAG, "config gnss failed, error code: %d", res);
+            continue;
         }
 
         TaskHandle_t xHandle;
@@ -762,7 +776,7 @@ void gnss_init(void)
             break;
         }
 
-    } while (1);
+    } while (retry--);
 
     // 善后处理统一在此处进行
     // vTaskDelete(NULL);

@@ -17,6 +17,7 @@
 #include "main/app_main.h"
 #include "cJSON.h"
 #include "bsp/mcu/mcu.h"
+#include "data/gnss_settings.h"
 
 static const char *TAG = "ALIYUN_SHADOW";
 
@@ -89,7 +90,7 @@ int32_t demo_update_shadow(void *shadow_handle, char *reported_data, int64_t ver
 /// @return >=0 向物联网平台报告了配置（反馈通过回调函数），否则说明读取配置失败或者发送失败
 int8_t update_shadow(void *shadow_handle)
 {
-    char text[1200] = {0};
+    char text[256] = {0};
     uint16_t text_len;
     int8_t res;
     bool flag = false;
@@ -97,10 +98,16 @@ int8_t update_shadow(void *shadow_handle)
     cJSON *root = cJSON_CreateObject();
 
     // 1. 网关配置信息
-    text_len = 128;
-    res      = read_gateway_config_text(text, &text_len);
+    res = read_gateway_config_text(text, NULL);
     if (res == 0) {
         cJSON_AddStringToObject(root, "gateway_config", text);
+        flag = true;
+    }
+
+    // 2. GNSS配置信息
+    res = read_gnss_settings_text(text);
+    if (res == 0) {
+        cJSON_AddStringToObject(root, "gnss_settings", text);
         flag = true;
     }
 
@@ -201,7 +208,37 @@ static int8_t shadow_recv_payload_write_flash(const char *payload)
                 }
             }
         }
-        // // 4. 重启ESP32使配置生效
+
+        // 2. gnss_settings
+        cJSON *obj_metadata_desired_gnss_settings  = cJSON_GetObjectItem(obj_metadata_desired, "gnss_settings");
+        cJSON *obj_metadata_reported_gnss_settings = cJSON_GetObjectItem(obj_metadata_reported, "gnss_settings");
+        if (obj_metadata_desired_gnss_settings != NULL && obj_metadata_reported_gnss_settings != NULL) {
+            cJSON *obj_metadata_desired_gnss_settings_timestamp  = cJSON_GetObjectItem(obj_metadata_desired_gnss_settings, "timestamp");
+            cJSON *obj_metadata_reported_gnss_settings_timestamp = cJSON_GetObjectItem(obj_metadata_reported_gnss_settings, "timestamp");
+            if (obj_metadata_desired_gnss_settings_timestamp != NULL && obj_metadata_reported_gnss_settings_timestamp != NULL) {
+                // 应用端的时间戳比设备端报告的时间戳大，表示是新的参数
+                // TODO: timestamp是double?
+                // if (obj_metadata_desired_gnss_settings_timestamp->valuedouble > obj_metadata_reported_gnss_settings_timestamp->valuedouble) {
+                if (obj_metadata_desired_gnss_settings_timestamp->valueint > obj_metadata_reported_gnss_settings_timestamp->valueint) {
+                    cJSON *obj_gnss_settings = cJSON_GetObjectItem(obj_state_desired, "gnss_settings");
+                    if (obj_gnss_settings != NULL) {
+                        LOGI(TAG, "gnss_settings = %s.", obj_gnss_settings->valuestring);
+
+                        // 写FLASH
+                        int8_t res = write_gnss_settings_text(obj_gnss_settings->valuestring);
+
+                        if (res == 0) {
+                            flag = true;
+                            LOGI(TAG, "write gnss settings OK");
+                        } else {
+                            LOGE(TAG, "write gnss settings ERROR(%d)", res);
+                        }
+                    }
+                }
+            }
+        }
+
+        // // 3. 重启ESP32使配置生效
         // if (flag)
         // {
         //     // 重启
@@ -237,6 +274,22 @@ static int8_t shadow_recv_payload_write_flash(const char *payload)
                 LOGI(TAG, "write gateway config OK");
             } else {
                 LOGE(TAG, "write gateway config ERROR(%d)", res);
+            }
+        }
+
+        // 2. gnss_settings
+        cJSON *obj_gnss_settings = cJSON_GetObjectItem(obj_state_desired, "gnss_settings");
+        if (obj_gnss_settings != NULL) {
+            LOGI(TAG, "gnss_settings = %s.", obj_gnss_settings->valuestring);
+
+            // 写FLASH
+            int8_t res = write_gnss_settings_text(obj_gnss_settings->valuestring);
+
+            if (res == 0) {
+                flag = true;
+                LOGI(TAG, "write gnss settings OK");
+            } else {
+                LOGE(TAG, "write gnss settings ERROR(%d)", res);
             }
         }
 

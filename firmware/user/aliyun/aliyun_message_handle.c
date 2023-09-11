@@ -50,7 +50,7 @@ static void send_gnss_data_msg(void *handle, void *data)
     cJSON_AddStringToObject(root, "gps", gnss_string);
 
     pub_payload = cJSON_Print(root);
-    sprintf(pub_topic, "/%s/%s/%s/%s", PRODUCT_KEY, get_device_name(), "user", "gps");
+    sprintf(pub_topic, "/%s/%s/%s/%s", PRODUCT_KEY, get_device_name(), "user", "gnss");
 
     int32_t res = aiot_mqtt_pub(handle, pub_topic, (uint8_t *)pub_payload, (uint32_t)strlen(pub_payload), 0);
 
@@ -141,7 +141,7 @@ static void send_gnss_data_msg(void *handle, void *data)
                 } else {
                     char pub_topic[128];
                     memset(pub_topic, 0, sizeof(pub_topic));
-                    sprintf(pub_topic, "/%s/%s/%s/%s", PRODUCT_KEY, get_device_name(), "user", "gps");
+                    sprintf(pub_topic, "/%s/%s/%s/%s", PRODUCT_KEY, get_device_name(), "user", "gnss");
 
                     if (NULL != handle) {
                         int32_t res = aiot_mqtt_pub(handle, pub_topic, buffer, (uint32_t)message_length, 0);

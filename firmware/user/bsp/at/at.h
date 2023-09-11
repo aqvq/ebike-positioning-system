@@ -28,6 +28,7 @@ int32_t ec800m_at_gnss_open();
 int32_t ec800m_at_gnss_state(uint8_t *state);
 int32_t ec800m_at_gnss_location();
 int32_t ec800m_at_gnss_close();
+int32_t ec800m_at_gnss_config(uint8_t mode);
 
 // at gnss nmea
 int32_t ec800m_at_gnss_nmea_enable();
@@ -38,5 +39,15 @@ int32_t ec800m_at_gnss_nmea_query();
 int32_t ec800m_at_gnss_enable_agps();
 int32_t ec800m_at_gnss_disable_agps();
 int32_t ec800m_at_gnss_agps_state(uint8_t *state);
+
+// at gnss apflash
+int32_t ec800m_at_gnss_enable_apflash();
+int32_t ec800m_at_gnss_disable_apflash();
+int32_t ec800m_at_gnss_apflash_state(uint8_t *state);
+
+// at gnss autogps
+int32_t ec800m_at_gnss_enable_autogps();
+int32_t ec800m_at_gnss_disable_autogps();
+int32_t ec800m_at_gnss_autogps_state(uint8_t *state);
 
 #endif

@@ -50,12 +50,13 @@ error_t device_info_print(devinfo_wl_t *config, char *output, uint16_t *output_l
 
     char *json_string       = cJSON_PrintUnformatted(root);
     size_t json_string_len  = strlen(json_string);
-    output[json_string_len] = '\0';
+    // output[json_string_len] = '\0';
 
     if (output_len) {
         *output_len = (uint16_t)json_string_len;
     }
-    memcpy((void *)output, (void *)json_string, json_string_len);
+    strcpy(output, json_string);
+    // memcpy((void *)output, (void *)json_string, json_string_len);
 
     cJSON_free(json_string);
     cJSON_Delete(root);
