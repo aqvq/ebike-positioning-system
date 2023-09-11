@@ -1,4 +1,5 @@
 
+#include <string.h>
 #include "storage.h"
 #include "error_type.h"
 #include "log/log.h"
@@ -55,7 +56,7 @@ error_t storage_install_interface(storage_interface_t *interface)
 
 error_t storage_default_read(uint32_t addr, uint8_t *data, uint32_t len)
 {
-    if (memcpy((void *)data, addr, len) != NULL) {
+    if (memcpy((void *)data, (void *)addr, len) != NULL) {
         return OK;
     } else {
         return STORAGE_MEMCPY_ERROR;
@@ -64,7 +65,7 @@ error_t storage_default_read(uint32_t addr, uint8_t *data, uint32_t len)
 
 error_t storage_default_write(uint32_t addr, uint8_t *data, uint32_t len)
 {
-    if (memcpy((void *)addr, data, len) != NULL) {
+    if (memcpy((void *)addr, (void *)data, len) != NULL) {
         return OK;
     } else {
         return STORAGE_MEMCPY_ERROR;

@@ -14,6 +14,7 @@ extern core_at_handle_t at_handle;
 
 // at device
 error_t ec800m_init();
+int32_t at_hal_init(void);
 int32_t ec800m_at_poweroff();
 int32_t ec800m_at_imei(char *imei);
 

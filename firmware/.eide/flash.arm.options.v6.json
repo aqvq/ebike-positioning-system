@@ -15,7 +15,8 @@
         "warnings": "no-warnings"
     },
     "asm-compiler": {
-        "$use": "asm-auto"
+        "$use": "asm-auto",
+        "misc-controls": "--diag_suppress=1950"
     },
     "linker": {
         "output-format": "elf",

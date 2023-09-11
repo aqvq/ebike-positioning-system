@@ -2,6 +2,7 @@
 #include "device_info.h"
 #include "storage/storage.h"
 #include "cJSON.h"
+#include <string.h>
 
 error_t read_device_info(devinfo_wl_t *devinfo_wl)
 {

@@ -4,6 +4,8 @@
 #define IMEI_STRING_LENGTH (20)
 static char imei_string[IMEI_STRING_LENGTH];
 
+static at_rsp_handler_t ec800m_imei_rsp_handler(char *rsp);
+
 int32_t ec800m_at_poweroff()
 {
 #define poweroff_cmd "AT+QPOWD=1\r\n"
@@ -49,7 +51,7 @@ int32_t ec800m_at_imei(char *imei)
             .cmd     = gnss_imei_cmd,
             .rsp     = "OK",
             .cmd_len = strlen(gnss_imei_cmd) - 1,
-            .handler = ec800m_imei_rsp_handler,
+            .handler = (at_rsp_handler_t)ec800m_imei_rsp_handler,
         },
     };
 

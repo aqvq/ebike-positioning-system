@@ -24,11 +24,13 @@
 #include "aliyun_config.h"
 #include "aliyun_protocol.h"
 #include "aliyun_dynreg.h"
+#include "aliyun_ota.h"
+#include "aliyun_ntp.h"
 #include "storage/storage.h"
 #include "aiot_logpost_api.h"
 #include "main/app_config.h"
 #include "aliyun_message_handle.h"
-#include "aliyun/aliyun_shadow.h"
+#include "aliyun_shadow.h"
 
 #define RETRY_COUNT (3)
 

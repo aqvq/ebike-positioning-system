@@ -26,6 +26,8 @@
 #include "utils/macros.h"
 #include "bsp/mcu/mcu.h"
 #include "bsp/at/at.h"
+#include "utils/time.h"
+#include "bsp/mcu/mcu.h"
 
 static const char *TAG = "ALIYUN_OTA";
 

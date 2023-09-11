@@ -15,6 +15,7 @@
 #include "log/log.h"
 #include "protocol/host/host_protocol.h"
 #include "protocol/host/host_message_handle.h"
+#include "gnss/gnss.h"
 
 static const char *TAG = "HOST_PROTOCOL";
 

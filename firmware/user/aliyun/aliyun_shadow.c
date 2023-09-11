@@ -16,6 +16,7 @@
 #include "log/log.h"
 #include "main/app_main.h"
 #include "cJSON.h"
+#include "bsp/mcu/mcu.h"
 
 static const char *TAG = "ALIYUN_SHADOW";
 

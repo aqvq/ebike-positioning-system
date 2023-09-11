@@ -34,7 +34,7 @@ extern int g_patch_version; /* 当前程序patch版本 */
 uint8_t uart_recv_data;                  /* 接收到的数据 */
 StreamBufferHandle_t uart_stream_buffer; /* 串口接收数据缓冲区 */
 extern UART_HandleTypeDef huart2;
-volatile flag_restart = 0;
+volatile uint8_t flag_restart = 0;
 
 //========================================================================================================
 error_t parse_get_gateway_config(const char *input, char *output);

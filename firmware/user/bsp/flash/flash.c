@@ -3,6 +3,8 @@
 #include "log/log.h"
 #include "error_type.h"
 #include "boot.h"
+#include <string.h>
+
 #define TAG "FLASH"
 
 uint32_t flash_read(uint32_t addr, uint8_t *buffer, uint32_t length)

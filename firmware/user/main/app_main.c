@@ -26,6 +26,7 @@
 #include "utils/util.h"
 #include "error_type.h"
 #include "bsp/eeprom/at24c64.h"
+#include "bsp/mcu/mcu.h"
 
 static const char *TAG = "MAIN";
 volatile uint32_t ulHighFrequencyTimerTicks;
@@ -130,9 +131,9 @@ error_t storage_init()
     storage_interface.storage_init_func       = NULL;
 #endif
     storage_interface.storage_base_address    = 0x00;
-    storage_interface.storage_read_data_func  = eeprom_read;
-    storage_interface.storage_write_data_func = eeprom_write;
-    storage_interface.storage_init_func       = eeprom_check;
+    storage_interface.storage_read_data_func  = (storage_read_data_func_t)eeprom_read;
+    storage_interface.storage_write_data_func = (storage_write_data_func_t)eeprom_write;
+    storage_interface.storage_init_func       = (storage_init_func_t)eeprom_check;
     err                                       = storage_install_interface(&storage_interface);
     if (err != OK) {
         LOGD(TAG, "storage init failed: %s", error_string(err));
