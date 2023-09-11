@@ -703,7 +703,7 @@ void gnss_init(void)
     gnss_settings_t config = {0};
     error_t err            = read_gnss_settings(&config);
     if (err != OK) {
-        LOGE("read gnss settings error");
+        LOGE(TAG, "read gnss settings error");
         return;
     }
 

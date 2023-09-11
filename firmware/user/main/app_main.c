@@ -27,6 +27,10 @@
 #include "error_type.h"
 #include "bsp/eeprom/at24c64.h"
 #include "bsp/mcu/mcu.h"
+#include "data/partition_info.h"
+#include "bsp/flash/boot.h"
+#include "upgrade/iap.h"
+#include "bsp/flash/flash.h"
 
 static const char *TAG = "MAIN";
 volatile uint32_t ulHighFrequencyTimerTicks;
@@ -51,6 +55,7 @@ uint16_t g_ble_num_mqtt = 0;
 int g_major_version = 0; /* 当前程序major版本 */
 int g_minor_version = 0; /* 当前程序minor版本 */
 int g_patch_version = 0; /* 当前程序patch版本 */
+extern void app_init();
 
 void print_welcome_message(void)
 {
@@ -154,6 +159,8 @@ void app_main(void)
     init_gateway_config();
     // 获取网关固件版本
     get_running_version();
+    // 打印app info
+    app_init();
     // 打印开机信息
     print_welcome_message();
     // 初始化设备

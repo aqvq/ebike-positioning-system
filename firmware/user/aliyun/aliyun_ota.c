@@ -28,6 +28,7 @@
 #include "bsp/at/at.h"
 #include "utils/time.h"
 #include "bsp/mcu/mcu.h"
+#include "bsp/flash/boot.h"
 
 static const char *TAG = "ALIYUN_OTA";
 
@@ -43,7 +44,8 @@ extern int g_patch_version; /* 当前程序patch版本 */
 extern uint8_t g_app_upgrade_flag;
 extern void *mqtt_handle;
 // mqtt_download实例，不为NULL表示当前有OTA任务
-void *g_dl_handle = NULL;
+void *g_dl_handle        = NULL;
+uint8_t ota_success_flag = 0;
 
 static void *ota_handle               = NULL;
 static uint16_t ota_version_first_no  = 0;
@@ -267,15 +269,15 @@ static void aliyun_ota_task(void *pvParameters)
                     LOGE(TAG, "app_info.id error!");
                 }
                 strcpy(app_info.note, "aliyun ota");
-                iap_update_partition(&app_info);
+                err = iap_update_partition(&app_info);
                 if (err != OK) {
-                    LOGE(TAG, "esp_ota_set_boot_partition failed!");
+                    LOGE(TAG, "iap_set_boot_partition failed!");
                 } else {
                     /* 上报升级后的版本号 */
                     char version[20] = {0};
                     sprintf(version, "%d.%d.%d", ota_version_first_no, ota_version_second_no, ota_version_third_no);
                     report_version(version);
-
+                    ota_success_flag = 1;
                     LOGI(TAG, "Prepare to restart system!");
                 }
             }
@@ -284,7 +286,10 @@ static void aliyun_ota_task(void *pvParameters)
             iap_deinit();
             LOGW(TAG, "iap_deinit!!!");
         }
-
+        if (ota_success_flag == 1) {
+            ota_success_flag = 0;
+            boot_swap_bank();
+        }
         ota_mcu_restart();
     }
 

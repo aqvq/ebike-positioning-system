@@ -325,6 +325,7 @@ error_t parse_switch(const char *input, char *output)
     write_partition_info(&partition);
     strcpy(output, "");
     flag_restart = 1;
+    boot_swap_bank(); // TODO: 会立即重启吗
     return 0;
 }
 
@@ -340,6 +341,7 @@ error_t parse_rollback(const char *input, char *output)
         write_app_previous(&app);
         strcpy(output, "");
         flag_restart = 1;
+        boot_swap_bank(); // TODO: 会立即重启吗
         return 0;
     } else {
         strcpy(output, "rollback failed");
@@ -410,13 +412,7 @@ error_t parse_set_gnss_settings(const char *input, char *output)
 
 error_t parse_upgrade(const char *input, char *output)
 {
-    LOGI("Upgrade program, about to start from bootloader...");
-    error_t err = boot_configure_boot_from_bootloader();
-    if (err != OK) {
-        strcpy(output, "boot configure failed");
-        printf("error: %d\n", res);
-        return -1;
-    }
-    mcu_restart();
-    return 0; // Will not be executed here
+    LOGI(TAG, "Upgrade program, about to start from bootloader...");
+    boot_jump_to_bootloader();
+    // Will not be executed here
 }

@@ -131,3 +131,19 @@ mytime_t get_timestamp()
     time.tm_isdst  = -1;
     return mymktime(&time);
 }
+
+void print_time(uint32_t timestamp, char *dest, size_t len)
+{
+    long days   = 24 * 60 * 60;
+    long months = days * 30;
+    long years  = months * 12;
+    long y, m, d, HH, MM, SS;
+    y  = timestamp / years + 1970;
+    m  = timestamp % years / months + 1;
+    d  = timestamp % years % months / days + 1;
+    HH = timestamp % years % months % days / 3600;
+    MM = timestamp % years % months % days % 3600 / 60;
+    SS = timestamp % years % months % days % 3600 % 60;
+    snprintf(dest, len, "%04d/%02d/%02d %02d:%02d:%02d", y, m, d, HH, MM, SS);
+}
+

@@ -1,6 +1,9 @@
 #ifndef __TIME_H_SHANG
 #define __TIME_H_SHANG
 
+#include <stddef.h>
+#include <stdint.h>
+
 struct tm {
     int tm_sec;   /* Seconds.	[0-60] (1 leap second) */
     int tm_min;   /* Minutes.	[0-59] */
@@ -20,5 +23,6 @@ typedef unsigned long mytime_t;
 
 mytime_t get_timestamp();
 int set_time(int year, int mon, int day, int hour, int min, int sec);
+void print_time(uint32_t timestamp, char *dest, size_t len);
 
 #endif // !__TIME_H_SHANG
