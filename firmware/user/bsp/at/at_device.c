@@ -69,3 +69,32 @@ int32_t ec800m_at_imei(char *imei)
 
     return res;
 }
+
+/**
+ * @brief 设备是否打开
+ * @param state < 0 关闭或者异常, >=0 打开
+ * @return int32_t
+ */
+int32_t ec800m_state()
+{
+#define state_cmd "AT\r\n"
+    /* GNSS模块命令表 */
+    const static core_at_cmd_item_t state_cmd_table[] = {
+        {
+            /* 查询GNSS状态 */
+            .cmd        = state_cmd,
+            .rsp        = "OK",
+            .timeout_ms = 100,
+            .cmd_len    = strlen(state_cmd) - 1,
+        },
+    };
+
+    int32_t res = STATE_SUCCESS;
+    if (at_handle.is_init != 1) {
+        return STATE_AT_NOT_INITED;
+    }
+
+    res = core_at_commands_send_sync(state_cmd_table, array_size(state_cmd_table));
+    return res;
+}
+

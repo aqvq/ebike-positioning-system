@@ -789,4 +789,6 @@ void gnss_init(void)
         }
 
     } while (retry--);
+
+    vTaskDelete(NULL);
 }

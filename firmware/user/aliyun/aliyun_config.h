@@ -22,15 +22,15 @@
 #define ALIYUN_VERSION    ALIYUN_VERSION_V1
 
 #if (ALIYUN_VERSION == ALIYUN_VERSION_V1)
-#define MQTT_HOST      "iot-as-mqtt.cn-shanghai.aliyuncs.com"
+#define MQTT_HOST      "iot-06z00d470n691my.mqtt.iothub.aliyuncs.com"
 #define MQTT_PORT      443
-#define PRODUCT_KEY    "a1LBtd7UqnS"
-#define PRODUCT_SECRET "fZbJPOMNU0tZVuDN"
+#define PRODUCT_KEY    "j1ng3QrOeu2"
+#define PRODUCT_SECRET "Ri5VlQYRkEXJx1HK"
 #elif (ALIYUN_VERSION == ALIYUN_VERSION_V2)
-#define MQTT_HOST      "iot-060a0d0l.mqtt.iothub.aliyuncs.com"
+#define MQTT_HOST      "iot-06z00d470n691my.mqtt.iothub.aliyuncs.com"
 #define MQTT_PORT      1883
-#define PRODUCT_KEY    "i69elwfQwzS"
-#define PRODUCT_SECRET "ifz6s7RmZuk8Sq8e"
+#define PRODUCT_KEY    "j1ng3QrOeu2"
+#define PRODUCT_SECRET "Ri5VlQYRkEXJx1HK"
 #endif
 
 #endif // _ALIYUN_CONFIG_H_

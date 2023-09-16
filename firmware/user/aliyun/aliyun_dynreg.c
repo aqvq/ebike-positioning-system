@@ -242,10 +242,13 @@ int8_t dynamic_register()
     }
 
     /* 配置连接的服务器地址 */
+    snprintf(host, 100, "%s", MQTT_HOST);
+#if 0
 #if (ALIYUN_VERSION == ALIYUN_VERSION_V1)
     snprintf(host, 100, "%s.%s", PRODUCT_KEY, MQTT_HOST);
 #elif (ALIYUN_VERSION == ALIYUN_VERSION_V2)
     snprintf(host, 100, "%s", MQTT_HOST);
+#endif
 #endif
 
     res = aiot_dynregmq_setopt(dynregmq_handle, AIOT_DYNREGMQOPT_HOST, (void *)host);

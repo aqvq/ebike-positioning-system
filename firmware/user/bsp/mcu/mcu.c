@@ -10,8 +10,8 @@ void mcu_restart(void)
 
 void mcu_init(void)
 {
-    boot_configure_boot_from_flash();
-    boot_enable_dual_bank();
+    // boot_configure_boot_from_flash();
+    // boot_enable_dual_bank();
 }
 
 /**

@@ -39,7 +39,6 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include "aiot_mqtt_props_api.h"
 
 /**
  * @brief MQTT报文类型
@@ -74,33 +73,7 @@ typedef enum {
      */
     AIOT_MQTTRECV_PUB_ACK,
 
-    /**
-     * @brief MQTT CONACK报文
-     */
-    AIOT_MQTTRECV_CON_ACK,
-
-    /**
-     * @brief MQTT SERVER DISCONNECT报文
-     */
-    AIOT_MQTTRECV_DISCONNECT,
 } aiot_mqtt_recv_type_t;
-
-
-/**
- * @brief MQTT协议版本
- *
- * @details
- *
- * 传入@ref aiot_mqtt_setopt 的MQTT协议版本号
- */
-
-typedef enum {
-    AIOT_MQTT_VERSION_3_1,
-    AIOT_MQTT_VERSION_5_0
-} aiot_mqtt_protocol_version;
-
-/* MQTT服务端支持的最大的用户属性的数目. */
-#define USER_PROPERTY_MAX    (20)
 
 typedef struct {
     /**
@@ -120,7 +93,6 @@ typedef struct {
             uint16_t topic_len;
             uint8_t *payload;
             uint32_t payload_len;
-            mqtt_properties_t *props;
         } pub;
         /**
          * @brief AIOT_MQTTRECV_SUB_ACK
@@ -129,39 +101,19 @@ typedef struct {
             int32_t res;
             uint8_t max_qos;
             uint16_t packet_id;
-            mqtt_properties_t *props;
         } sub_ack;
         /**
          * @brief AIOT_MQTTRECV_UNSUB_ACK
          */
         struct {
             uint16_t packet_id;
-            mqtt_properties_t *props;
         } unsub_ack;
         /**
          * @brief AIOT_MQTTRECV_PUB_ACK
          */
         struct {
             uint16_t packet_id;
-            mqtt_properties_t *props;
         } pub_ack;
-
-        /**
-         * @brief AIOT_MQTTRECV_CON_ACK
-         */
-        struct {
-            uint8_t reason_code;
-            mqtt_properties_t *props;
-        } con_ack;
-
-        /**
-         * @brief AIOT_MQTTRECV_DISCONNECT. MQTT 5.0特性.
-         */
-        struct {
-            uint8_t reason_code;
-            mqtt_properties_t *props;
-        } server_disconnect;
-
     } data;
 } aiot_mqtt_recv_t;
 
@@ -594,56 +546,18 @@ typedef enum {
     AIOT_MQTTOPT_USERDATA,
 
     /**
-     * @brief SDK缓存的QOS 1消息的数量的最大值
-     *
-     * @details
-     *
-     * 当发送qos1 MQTT PUBLISH报文后, 该消息会加入到一个重传的list中,收到pub ack报文后该消息会从该list中删除
-     * 该list需要设置一个最大值, 否则该list在弱网情况下可能会一直膨胀,直到内存开销耗完
-     *
-     * 数据类型: (uint16_t *) 默认值: 20
-     */
+    * @brief SDK缓存的QOS 1消息的数量的最大值
+    *
+    * @details
+    *
+    * 当发送qos1 MQTT PUBLISH报文后, 该消息会加入到一个重传的list中,收到pub ack报文后该消息会从该list中删除
+    * 该list需要设置一个最大值, 否则该list在弱网情况下可能会一直膨胀,直到内存开销耗完
+    *
+    * 数据类型: (uint16_t *) 默认值: 20
+    */
     AIOT_MQTTOPT_MAX_REPUB_NUM,
 
     /**
-     * @brief 设置MQTT 协议的版本号
-     *
-     * @details
-     *
-     * 1. 默认协议版本号是3.1.1
-     *
-     * 2. 用户可以使用该选项将版本号设置为AIOT_MQTT_VERSION_5_0
-     *
-     * 数据类型: (void *)
-     */
-    AIOT_MQTTOPT_VERSION,
-
-    /**
-     * @brief MQTT 5.0特性. 设置是否要使能assigned clentid功能
-     *
-     * @details
-     *
-     * 1. 默认不使能
-     *
-     * 2. 用户可以设置值1将该功能使能
-     *
-     * 数据类型: (void *)
-     */
-    AIOT_MQTTOPT_ASSIGNED_CLIENTID,
-
-    /**
-     * @brief MQTT 5.0特性. 设置是否要使能设备端流控功能
-     *
-     * @details
-     *
-     * 1. 默认不使能
-     *
-     * 2. 用户可以设置值1将该功能使能
-     *
-     * 数据类型: (void *)
-     */
-    AIOT_MQTTOPT_FLOW_CONTROL_ENABLED,
-    /*
     * @brief 是否开启topic的起始头校验
     *
     * @details
@@ -880,183 +794,6 @@ int32_t aiot_mqtt_unsub(void *handle, char *topic);
  * 2. 当@ref aiot_mqtt_deinit 被调用时, 该函数会立即返回, 此时返回值为@ref STATE_USER_INPUT_EXEC_DISABLED
  */
 int32_t aiot_mqtt_recv(void *handle);
-
-/**
- * @brief 遗嘱消息
- */
-typedef struct {
-    /**
-     * @brief 遗嘱消息的topic
-     */
-    char *topic;
-    /**
-     * @brief 遗嘱消息的payload
-     */
-    uint8_t *payload;
-    /**
-     * @brief 遗嘱消息的payload长度
-     */
-    uint32_t payload_len;
-    /**
-     * @brief 遗嘱消息被发布时的qos等级
-     */
-    uint8_t qos;
-    /**
-     * @brief 遗嘱消息是否为保留消息
-     */
-    uint8_t retain;
-    /**
-     * @brief 遗嘱消息携带的属性
-     */
-    mqtt_properties_t *props;
-} will_message_t;
-
-/**
- * @brief 与MQTT服务器建立连接. 以MQTT 5.0协议的方式接入, 支持5.0的特性.
- * 在调用这个接口前, 需要确保已经通过AIOT_MQTTOPT_VERSION的方式, 设置过版本号为AIOT_MQTT_VERSION_5_0
- * @details
- *
- * 使用@ref aiot_mqtt_setopt 配置的mqtt连接参数连接mqtt服务器, 使用的建联参数按如下顺序选择
- *
- * 1. 若配置了以下选项, 直接用配置的连接参数连接 @ref AIOT_MQTTOPT_HOST 选项指定的任意MQTT服务器
- *
- *    + @ref AIOT_MQTTOPT_USERNAME
- *    + @ref AIOT_MQTTOPT_PASSWORD
- *    + @ref AIOT_MQTTOPT_CLIENTID
- *
- * 2. 若配置了以下选项, 则强制以阿里云平台的签名算法计算连接参数作为MQTT的用户名/密码, 连接阿里云平台
- *
- *    + @ref AIOT_MQTTOPT_PRODUCT_KEY
- *    + @ref AIOT_MQTTOPT_DEVICE_NAME
- *    + @ref AIOT_MQTTOPT_DEVICE_SECRET
- *
- * @param[in] handle MQTT实例句柄
- * @param[in] will_message MQTT建连报文的遗嘱消息，若不存在，设置为NULL
- * @param[in] conn_prop 指定MQTT CONNECT报文的属性
- *
- * @return int32_t
- * @retval STATE_MQTT_INVALID_PROTOCOL_VERSION mqtt协议的版本号不对, 没有通过AIOT_MQTTOPT_VERSION将版本号将设置为5.0
- * @retval <STATE_SUCCESS 执行失败, 更多信息请参考@ref aiot_state_api.h
- * @retval >=STATE_SUCCESS 执行成功
- *
- * @note
- *
- * 当配置@ref AIOT_MQTTOPT_USERNAME , @ref AIOT_MQTTOPT_PASSWORD 和@ref AIOT_MQTTOPT_CLIENTID 配置自定义连接凭据时,
- *
- * 此函数会忽略@ref AIOT_MQTTOPT_PRODUCT_KEY , @ref AIOT_MQTTOPT_DEVICE_NAME 和@ref AIOT_MQTTOPT_DEVICE_SECRET,
- *
- * 直接使用自定义凭据连接指定的MQTT服务器
- */
-int32_t aiot_mqtt_connect_v5(void *handle, will_message_t *will_message, mqtt_properties_t *conn_prop);
-
-/**
- * @brief 发送一条PUBLISH报文到MQTT服务器, QoS为0, 用于发布指定的消息
- * 以MQTT 5.0协议的方式接入, 支持5.0的特性.
- * 在调用这个接口前, 需要确保已经通过AIOT_MQTTOPT_VERSION的方式, 设置过版本号为AIOT_MQTT_VERSION_5_0
- *
- * @param[in] handle MQTT实例句柄
- * @param[in] topic 指定MQTT PUBLISH报文的topic
- * @param[in] payload 指定MQTT PUBLISH报文的payload
- * @param[in] payload_len 指定MQTT PUBLISH报文的payload_len
- * @param[in] qos 指定mqtt的qos值, 仅支持qos0和qos1
- * @param[in] retain 指定是否为保留消息
- * @param[in] pub_prop 指定MQTT PUB报文的属性
- *
- * @return int32_t
- * @retval STATE_MQTT_INVALID_PROTOCOL_VERSION mqtt协议的版本号不对, 没有通过AIOT_MQTTOPT_VERSION将版本号将设置为5.0
- * @retval <STATE_SUCCESS 执行失败, 更多信息请参考@ref aiot_state_api.h
- * @retval >=STATE_SUCCESS 执行成功
- */
-int32_t aiot_mqtt_pub_v5(void *handle, char *topic, uint8_t *payload, uint32_t payload_len, uint8_t qos,
-                                uint8_t retain, mqtt_properties_t *pub_prop);
-
-/**
- * @brief 与MQTT服务器断开连接
- * 以MQTT 5.0协议的方式接入, 支持5.0的特性.
- * 在调用这个接口前, 需要确保已经通过AIOT_MQTTOPT_VERSION的方式, 设置过版本号为AIOT_MQTT_VERSION_5_0
-
- * @details
- *
- * 向MQTT服务器发送MQTT DISCONNECT报文, 然后断开网络连接
- *
- * 如果需要再次与MQTT服务器建立连接, 调用@ref aiot_mqtt_connect 即可
- *
- * @param[in] handle MQTT实例句柄
- * @param[in] reason_code 指定MQTT DISCONNECT的原因
- * @param[in] disconn_property 指定MQTT DISCONNECT报文的属性
- *
- * @return int32_t
- * @retval STATE_MQTT_INVALID_PROTOCOL_VERSION mqtt协议的版本号不对, 没有通过AIOT_MQTTOPT_VERSION将版本号将设置为5.0
- * @retval <STATE_SUCCESS 执行失败, 更多信息请参考@ref aiot_state_api.h
- * @retval >=STATE_SUCCESS 执行成功
- */
-int32_t aiot_mqtt_disconnect_v5(void *handle, uint8_t reason_code, mqtt_properties_t *disconn_property);
-
-/**
- * @brief 订阅选项
- */
-typedef struct {
-    /**
-     * @brief 保留消息选项
-     * @details
-     *  [0]订阅时有保留消息立即发送
-     *  [1]当订阅关系不存在时，订阅时有保留消息立即发送
-     *  [2]订阅时，有保留消息也不发送
-     */
-    uint8_t retain_handling;
-    /**
-     * @brief 云端pub时是否开启保留消息标记：[0]不携带保留标记 [1]携带保留标记
-     */
-    uint8_t retain_as_publish;
-    /**
-     * @brief 订阅非本地发布消息：[0]不启用 [1]启用
-     */
-    uint8_t no_local;
-    /**
-     * @brief Qos级别，取值0/1
-     */
-    uint8_t qos;
-} sub_options_t;
-
-/**
- * @brief 发送一条mqtt SUBSCRIBE报文到MQTT服务器, 用于订阅指定的topic
- * 以MQTT 5.0协议的方式接入, 支持5.0的特性.
- * 在调用这个接口前, 需要确保已经通过AIOT_MQTTOPT_VERSION的方式, 设置过版本号为AIOT_MQTT_VERSION_5_0
-
- *
- * @param[in] handle MQTT实例句柄
- * @param[in] topic 指定MQTT SUBSCRIBE报文的topic
- * @param[in] opts 订阅选项
- * @param[in] handler 与topic对应的MQTT PUBLISH报文回调函数, 当有消息发布到topic时, 该回调函数被调用
-                    若handler为NULL传入, 则SDK调用@ref AIOT_MQTTOPT_RECV_HANDLER 配置的回调函数
-                    若多次调用aiot_mqtt_sub()并对同一topic指定不同的handler, 有消息到达时不同handler都会被调用到
- * @param[in] userdata 可让SDK代为保存的用户上下文, 当回调函数被调用时, 此上下文会通过handler传回给用户
- *                  若未指定该上下文, 那么通过@ref AIOT_MQTTOPT_USERDATA 配置的上下文会通过handler传回给用户
- * @param[in] sub_prop 指定MQTT SUBSCRIBE报文的属性
- *
- * @return int32_t
- * @retval STATE_MQTT_INVALID_PROTOCOL_VERSION mqtt协议的版本号不对, 没有通过AIOT_MQTTOPT_VERSION将版本号将设置为5.0
- * @retval <STATE_SUCCESS 执行失败, 更多信息请参考@ref aiot_state_api.h
- * @retval >=STATE_SUCCESS 执行成功
- */
-int32_t aiot_mqtt_sub_v5(void *handle, char *topic, sub_options_t *opts, aiot_mqtt_recv_handler_t handler,
-                                void *userdata, mqtt_properties_t *sub_prop);
-
-/**
- * @brief 发送一条mqtt UNSUBSCRIBE报文到MQTT服务器, 用于取消订阅指定的topic
- * 以MQTT 5.0协议的方式接入, 支持5.0的特性.
- * 在调用这个接口前, 需要确保已经通过AIOT_MQTTOPT_VERSION的方式, 设置过版本号为AIOT_MQTT_VERSION_5_0
- *
- * @param[in] handle MQTT实例句柄
- * @param[in] topic 指定MQTT UNSUBSCRIBE报文的topic
- * @param[in] unsub_prop 指定MQTT UNSUBSCRIBE报文的属性
- *
- * @return int32_t
- * @retval STATE_MQTT_INVALID_PROTOCOL_VERSION mqtt协议的版本号不对, 没有通过AIOT_MQTTOPT_VERSION将版本号将设置为5.0
- * @retval <STATE_SUCCESS 执行失败, 更多信息请参考@ref aiot_state_api.h
- * @retval >=STATE_SUCCESS 执行成功
- */
-int32_t aiot_mqtt_unsub_v5(void *handle, char *topic, mqtt_properties_t *unsub_prop);
 
 #if defined(__cplusplus)
 }

@@ -17,6 +17,7 @@ error_t ec800m_init();
 int32_t at_hal_init(void);
 int32_t ec800m_at_poweroff();
 int32_t ec800m_at_imei(char *imei);
+int32_t ec800m_state();
 
 // at tcp
 int32_t ec800m_at_tcp_close();

@@ -52,3 +52,20 @@ void print(const char *format, ...)
     // xStreamBufferSend(g_print_buffer, (void *)log_buf, strlen(log_buf), 0);
 
 }
+
+// #ifdef __GNUC__
+// int _write(int fd, char *ptr, int len)
+// {
+//     HAL_UART_Transmit(&huart2, (uint8_t *)ptr, len, 0xFFFF);
+//     return len;
+// }
+
+// #else
+
+int fputc(int ch, FILE *f)
+{
+    HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFF); // 输出指向串口USART3
+    return ch;
+}
+
+// #endif

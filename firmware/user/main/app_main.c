@@ -31,6 +31,7 @@
 #include "bsp/flash/boot.h"
 #include "upgrade/iap.h"
 #include "bsp/flash/flash.h"
+#include "bsp/mcu/mcu.h"
 
 static const char *TAG = "MAIN";
 volatile uint32_t ulHighFrequencyTimerTicks;
@@ -165,8 +166,6 @@ void app_main(void)
     print_welcome_message();
     // 初始化设备
     ec800m_init();
-    // 初始化网络
-    at_hal_init();
 
 #if UART_GATEWAY_CONFIG_ENABLED
     xTaskCreate(uart_gateway_config_task, UART_GATEWAY_CONFIG_TASK_NAME, UART_GATEWAY_CONFIG_TASK_DEPTH, NULL, 3, NULL);
@@ -174,18 +173,19 @@ void app_main(void)
 
 #if MQTT_ENABLED
     // 初始化4G模块
-    iot_connect();
-    // xTaskCreate(iot_connect, "mqtt", 5120, NULL, 3, NULL);
+    // iot_connect();
+    xTaskCreate(iot_connect, "conn", 5120, NULL, 3, NULL);
 #endif
 
 #if GNSS_ENABLED
-    gnss_init();
-    // xTaskCreate(gnss_init, "gnss", 1024, NULL, 3, NULL);
+    // gnss_init();
+    xTaskCreate(gnss_init, "gnss", 2048, NULL, 3, NULL);
 #endif
 
 #if HOST_ENABLED
     xTaskCreate(host_protocol_task, HOST_PROTOCOL_TASK_NAME, 512, NULL, 3, NULL);
 #endif
+
     vTaskDelete(NULL);
 }
 

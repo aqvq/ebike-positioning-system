@@ -100,7 +100,7 @@ char *get_device_name()
     devinfo_wl_t device = {0};
     int8_t err          = read_device_info(&device);
     if (err == OK) {
-        if (device.device_name[0] == 0xFF) {
+        if (device.device_name[0] == 0xFF || device.device_name[0] == 0) {
             if (ec800m_at_imei(device_name) == STATE_SUCCESS && device_name[0] != 0) {
                 return device_name;
             }

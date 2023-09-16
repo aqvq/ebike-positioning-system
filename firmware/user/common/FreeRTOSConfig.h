@@ -54,6 +54,7 @@ extern uint32_t SystemCoreClock;
 #define configMINIMAL_STACK_SIZE         ((uint16_t)128)
 #define configSUPPORT_DYNAMIC_ALLOCATION 1
 #define configSUPPORT_STATIC_ALLOCATION  0
+#define configAPPLICATION_ALLOCATED_HEAP 0
 // #define configTOTAL_HEAP_SIZE            ((size_t)((RAM_HEAP_SIZE) + (CCMRAM_HEAP_SIZE)))
 
 /* Constants related to the behaviour or the scheduler. */

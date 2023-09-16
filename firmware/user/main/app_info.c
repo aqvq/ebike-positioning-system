@@ -107,4 +107,5 @@ void app_init()
         reset_app_info(&app_partition);
     }
     printf("\r\nlaunch app.");
+    printf("\r\n");
 }

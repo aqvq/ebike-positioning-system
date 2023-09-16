@@ -69,13 +69,12 @@ void iot_send_task(void *pvParameters)
 
 int32_t iot_connect(void)
 {
-
     int32_t res = iot_interface.iot_connect(received_from_iot);
     if (res >= 0) {
         is_connect_iot = 1;
 
         // 创建发送数据任务
-        int8_t err = xTaskCreate(iot_send_task, "iot_send_task", 512, NULL, 1, NULL);
+        int8_t err = xTaskCreate(iot_send_task, "iot_send_task", 1024, NULL, 3, NULL);
         if (err != pdPASS) {
             LOGE(TAG, "creare iot_send_task failed");
             LOGE(TAG, "Free Heap Size: %d", xPortGetMinimumEverFreeHeapSize());
@@ -83,7 +82,8 @@ int32_t iot_connect(void)
             res = -0x100;
         }
     }
-    return res;
+    // return res;
+    vTaskDelete(NULL);
 }
 
 int32_t iot_disconnect(void)

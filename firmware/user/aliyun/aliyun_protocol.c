@@ -219,10 +219,13 @@ static int32_t aliyun_mqtt_start(void **handle, char *product_key, char *device_
     }
 
     /* 配置连接的服务器地址 */
+    snprintf(host, 100, "%s", MQTT_HOST);
+#if 0
 #if (ALIYUN_VERSION == ALIYUN_VERSION_V1)
     snprintf(host, 100, "%s.%s", PRODUCT_KEY, MQTT_HOST);
 #elif (ALIYUN_VERSION == ALIYUN_VERSION_V2)
     snprintf(host, 100, "%s", MQTT_HOST);
+#endif
 #endif
 
     aiot_mqtt_setopt(mqtt_handle, AIOT_MQTTOPT_HOST, (void *)host);
@@ -441,12 +444,12 @@ int32_t aliyun_iot_connect(iot_receive_callback func)
     char *device_secret;
 
     /* 硬件AT模组初始化 */
-    // res = at_hal_init();
-    // if (res < STATE_SUCCESS) {
-    //     LOGE(TAG, "aliyun protocol at_hal_init failed, restart");
-    //     ec800m_poweroff_and_mcu_restart();
-    //     return -1;
-    // }
+    res = at_hal_init();
+    if (res < STATE_SUCCESS) {
+        LOGE(TAG, "aliyun protocol at_hal_init failed, restart");
+        ec800m_poweroff_and_mcu_restart();
+        return -1;
+    }
 
     /* 动态注册 */
     if (!is_registered()) {

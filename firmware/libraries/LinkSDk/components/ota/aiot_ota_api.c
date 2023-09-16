@@ -19,9 +19,14 @@
 static int32_t _ota_subscribe(void *mqtt_handle, void *ota_handle);
 static void    _ota_mqtt_process(void *handle, const aiot_mqtt_recv_t *const packet, void *userdata);
 static int32_t _ota_parse_json(aiot_sysdep_portfile_t *sysdep, void *in, uint32_t in_len, char *key_word, char **out);
+static void    _http_recv_handler(void *handle, const aiot_http_recv_t *recv_data, void *userdata);
 static int32_t _ota_parse_list_array(char *str, int32_t str_len, ota_list_json *array);
 static int32_t _process_single_file(aiot_sysdep_portfile_t *sysdep, char *data, uint32_t data_len,
                                     int type, aiot_download_task_desc_t *task_desc, ota_handle_t *ota_handle);
+static int32_t _download_parse_url(const char *url, char *host, uint32_t max_host_len, char *path,
+                                   uint32_t max_path_len);
+static int32_t _download_digest_update(download_handle_t *download_handle, uint8_t *buffer, uint32_t buffer_len);
+static int32_t _download_digest_verify(download_handle_t *download_handle);
 static void   *_download_deep_copy_base(aiot_sysdep_portfile_t *sysdep, char *in);
 
 static aiot_mqtt_topic_map_t g_ota_topic_map[OTA_TOPIC_NUM];
@@ -153,6 +158,171 @@ int32_t aiot_ota_setopt(void *handle, aiot_ota_option_t option, void *data)
     return res;
 }
 
+void *aiot_download_init(void)
+{
+    download_handle_t *download_handle = NULL;
+    aiot_sysdep_portfile_t *sysdep = NULL;
+    void *http_handle = NULL;
+    uint32_t default_body_max_len = OTA_DEFAULT_DOWNLOAD_BUFLEN;
+    uint32_t default_timeout_ms = OTA_DEFAULT_DOWNLOAD_TIMEOUT_MS;
+
+    sysdep = aiot_sysdep_get_portfile();
+    if (NULL == sysdep) {
+        return NULL;
+    }
+
+    download_handle = sysdep->core_sysdep_malloc(sizeof(download_handle_t), DOWNLOAD_MODULE_NAME);
+    if (NULL == download_handle) {
+        return NULL;
+    }
+    memset(download_handle, 0, sizeof(download_handle_t));
+    download_handle->sysdep = sysdep;
+    download_handle->data_mutex = sysdep->core_sysdep_mutex_init();
+    download_handle->recv_mutex = sysdep->core_sysdep_mutex_init();
+
+    http_handle = core_http_init();
+    if (NULL == http_handle) {
+        sysdep->core_sysdep_free(download_handle);
+        return NULL;
+    }
+    if ((STATE_SUCCESS != core_http_setopt(http_handle, CORE_HTTPOPT_RECV_HANDLER, _http_recv_handler)) ||
+            (STATE_SUCCESS != core_http_setopt(http_handle, CORE_HTTPOPT_USERDATA, (void *)download_handle)) ||
+            (STATE_SUCCESS != core_http_setopt(http_handle, CORE_HTTPOPT_BODY_BUFFER_MAX_LEN, (void *)&default_body_max_len)) ||
+            (STATE_SUCCESS != core_http_setopt(http_handle, CORE_HTTPOPT_RECV_TIMEOUT_MS, (void *)&default_timeout_ms))) {
+        sysdep->core_sysdep_free(download_handle);
+        core_http_deinit(&http_handle);
+        return NULL;
+    }
+    download_handle->http_handle = http_handle;
+
+    return download_handle;
+}
+
+int32_t aiot_download_deinit(void **handle)
+{
+    int32_t res = STATE_SUCCESS;
+    if (NULL == handle || NULL == *handle) {
+        return STATE_DOWNLOAD_DEINIT_HANDLE_IS_NULL;
+    }
+
+    download_handle_t *download_handle = *(download_handle_t **)(handle);
+    aiot_sysdep_portfile_t *sysdep = download_handle->sysdep;
+    core_http_deinit(&(download_handle->http_handle));
+
+    if (NULL != download_handle->task_desc) {
+        if (AIOT_OTA_DIGEST_SHA256 == download_handle->task_desc->digest_method) {
+            if (NULL != download_handle->digest_ctx) {
+                core_sha256_free(download_handle->digest_ctx);
+                sysdep->core_sysdep_free(download_handle->digest_ctx);
+            }
+        } else if (AIOT_OTA_DIGEST_MD5 == download_handle->task_desc->digest_method) {
+            if (NULL != download_handle->digest_ctx) {
+                utils_md5_free(download_handle->digest_ctx);
+                sysdep->core_sysdep_free(download_handle->digest_ctx);
+            }
+        }
+        _download_deep_free_task_desc(sysdep, download_handle->task_desc);
+        sysdep->core_sysdep_free(download_handle->task_desc);
+    }
+
+    sysdep->core_sysdep_mutex_deinit(&(download_handle->data_mutex));
+    sysdep->core_sysdep_mutex_deinit(&(download_handle->recv_mutex));
+    sysdep->core_sysdep_free(download_handle);
+    *handle = NULL;
+    return res;
+}
+
+int32_t aiot_download_setopt(void *handle, aiot_download_option_t option, void *data)
+{
+    int32_t res = STATE_SUCCESS;
+    download_handle_t *download_handle = (download_handle_t *)handle;
+
+    if (download_handle == NULL) {
+        return STATE_DOWNLOAD_SETOPT_HANDLE_IS_NULL;
+    }
+    if (NULL == data) {
+        return STATE_DOWNLOAD_SETOPT_DATA_IS_NULL;
+    }
+
+    aiot_sysdep_portfile_t *sysdep = download_handle->sysdep;
+
+    sysdep->core_sysdep_mutex_lock(download_handle->data_mutex);
+    switch (option) {
+    case AIOT_DLOPT_NETWORK_CRED: {
+        res = core_http_setopt(download_handle->http_handle, CORE_HTTPOPT_NETWORK_CRED, data);
+    }
+    break;
+    case AIOT_DLOPT_NETWORK_PORT: {
+        res = core_http_setopt(download_handle->http_handle, CORE_HTTPOPT_PORT, data);
+    }
+    break;
+    case AIOT_DLOPT_RECV_TIMEOUT_MS: {
+        uint32_t *timeout_ms = (uint32_t *)data;
+        void *http_handle = download_handle->http_handle;
+        res = core_http_setopt(http_handle, CORE_HTTPOPT_RECV_TIMEOUT_MS, timeout_ms);
+    }
+    break;
+    case AIOT_DLOPT_USERDATA: {
+        download_handle->userdata = data;
+    }
+    break;
+    case AIOT_DLOPT_TASK_DESC: {
+        void *new_task_desc = _download_deep_copy_task_desc(sysdep, data);
+        if (NULL == new_task_desc) {
+            res = STATE_DOWNLOAD_SETOPT_COPIED_DATA_IS_NULL;
+            break;
+        }
+
+        download_handle->task_desc = (aiot_download_task_desc_t *)new_task_desc;
+        if (AIOT_OTA_DIGEST_SHA256 == download_handle->task_desc->digest_method) {
+            core_sha256_context_t *ctx = sysdep->core_sysdep_malloc(sizeof(core_sha256_context_t), OTA_MODULE_NAME);
+            if (NULL == ctx) {
+                res = STATE_DOWNLOAD_SETOPT_MALLOC_SHA256_CTX_FAILED;
+                break;
+            }
+            core_sha256_init(ctx);
+            core_sha256_starts(ctx);
+            download_handle->digest_ctx = (void *) ctx;
+        } else if (AIOT_OTA_DIGEST_MD5 == download_handle->task_desc->digest_method) {
+            utils_md5_context_t *ctx = sysdep->core_sysdep_malloc(sizeof(utils_md5_context_t), OTA_MODULE_NAME);
+            if (NULL == ctx) {
+                res = STATE_DOWNLOAD_SETOPT_MALLOC_MD5_CTX_FAILED;
+                break;
+            }
+            utils_md5_init(ctx);
+            utils_md5_starts(ctx);
+            download_handle->digest_ctx = (void *) ctx;
+        }
+        download_handle->download_status = DOWNLOAD_STATUS_START;
+    }
+    break;
+    case  AIOT_DLOPT_RANGE_START: {
+        download_handle->range_start = *(uint32_t *)data;
+        download_handle->range_size_fetched = 0;
+    }
+    break;
+    case  AIOT_DLOPT_RANGE_END: {
+        download_handle->range_end = *(uint32_t *)data;
+        download_handle->range_size_fetched = 0;
+    }
+    break;
+    case AIOT_DLOPT_RECV_HANDLER: {
+        download_handle->recv_handler = (aiot_download_recv_handler_t)data;
+    }
+    break;
+    case AIOT_DLOPT_BODY_BUFFER_MAX_LEN: {
+        res = core_http_setopt(download_handle->http_handle, CORE_HTTPOPT_BODY_BUFFER_MAX_LEN, data);
+    }
+    break;
+    default: {
+        res = STATE_USER_INPUT_OUT_RANGE;
+    }
+    break;
+    }
+    sysdep->core_sysdep_mutex_unlock(download_handle->data_mutex);
+    return res;
+}
+
 int32_t aiot_ota_report_version(void *handle, char *version)
 {
     int32_t res = STATE_SUCCESS;
@@ -262,6 +432,122 @@ int32_t aiot_ota_query_firmware(void *handle)
     sysdep->core_sysdep_free(payload_string);
     return res;
 }
+
+int32_t aiot_download_report_progress(void *handle, int32_t percent)
+{
+    int32_t res = STATE_SUCCESS;
+    download_handle_t *download_handle = NULL;
+    aiot_sysdep_portfile_t *sysdep = NULL;
+    char out_buffer[4] = {0};
+    uint8_t out_len;
+    char *payload_string;
+
+    if (NULL == handle) {
+        return STATE_DOWNLOAD_REPORT_HANDLE_IS_NULL;
+    }
+
+    download_handle = (download_handle_t *)handle;
+    sysdep = download_handle->sysdep;
+
+    if (NULL == download_handle->task_desc) {
+        return STATE_DOWNLOAD_REPORT_TASK_DESC_IS_NULL;
+    }
+
+    core_int2str(percent, out_buffer, &out_len);
+
+    if (download_handle->task_desc->module) {
+        char *src[] = {"{\"step\":\"", out_buffer, "\",\"desc\":\"\",\"module\":\"", download_handle->task_desc->module, "\"}"};
+        uint8_t topic_len = sizeof(src) / sizeof(char *);
+        core_sprintf(sysdep, &payload_string, "%s%s%s%s%s", src, topic_len, OTA_MODULE_NAME);
+    } else {
+        char *src[] = {"{\"step\":\"", out_buffer, "\",\"desc\":\"\"}"};
+        uint8_t topic_len = sizeof(src) / sizeof(char *);
+        core_sprintf(sysdep, &payload_string, "%s%s%s", src, topic_len, OTA_MODULE_NAME);
+    }
+
+    res = _ota_publish_base(download_handle->task_desc->mqtt_handle, OTA_PROGRESS_TOPIC_PREFIX,
+                            download_handle->task_desc->product_key,
+                            download_handle->task_desc->device_name, NULL, payload_string);
+    sysdep->core_sysdep_free(payload_string);
+    return res;
+}
+
+int32_t aiot_download_recv(void *handle)
+{
+    int32_t res = STATE_SUCCESS;
+    download_handle_t *download_handle = (download_handle_t *)handle;
+    aiot_sysdep_portfile_t *sysdep = NULL;
+    void *http_handle = NULL;
+
+    if (NULL == download_handle) {
+        return STATE_DOWNLOAD_RECV_HANDLE_IS_NULL;
+    }
+    http_handle = download_handle->http_handle;
+    sysdep = download_handle->sysdep;
+
+    sysdep->core_sysdep_mutex_lock(download_handle->recv_mutex);
+    switch (download_handle->download_status) {
+    case DOWNLOAD_STATUS_RENEWAL: {
+        /* 下载中断, 发起断点续传 */
+        res = aiot_download_send_request(download_handle);
+        if (res == STATE_SUCCESS) {
+            res = STATE_DOWNLOAD_RENEWAL_REQUEST_SENT;
+        }
+    }
+    break;
+    case DOWNLOAD_STATUS_FETCH: {
+        /* 去网络收取报文, 并将各种状态值反馈给用户 */
+        res = core_http_recv(http_handle);
+
+        /* 全部固件下载完成 */
+        if (download_handle->size_fetched == download_handle->task_desc->size_total) {
+            res = STATE_DOWNLOAD_FINISHED;
+            break;
+        }
+
+        /* 用户用多个range下载, 可能有重合, 导致最终累计的下载长度超出了固件的实际长度 */
+        if (download_handle->size_fetched > download_handle->task_desc->size_total) {
+            res = STATE_DOWNLOAD_FETCH_TOO_MANY;
+            break;
+        }
+
+        /* 没有下载完整个固件, 但是下载完成了用户指定的range */
+        if (download_handle->content_len > 0 && download_handle->range_size_fetched == download_handle->content_len) {
+            res = STATE_DOWNLOAD_RANGE_FINISHED;
+            /* range内的固件下载完成后, 要将content_len设置为0, 便于下次重新下载 */
+            download_handle->content_len = 0;
+            break;
+        }
+
+        if (res <= 0) {
+            /* 在没有下载完成, 同时又碰到core_http_recv的返回值<=0的情况, 需要做断点续传 */
+            uint8_t res_string_len = 0;
+            char res_string[OTA_MAX_DIGIT_NUM_OF_UINT32] = {0};
+            core_int2str(res, res_string, &res_string_len);
+            core_log1(download_handle->sysdep, STATE_DOWNLOAD_RECV_ERROR, "recv got %s, renewal\r\n",
+                      &res_string);
+            download_handle->download_status = DOWNLOAD_STATUS_RENEWAL;
+        } else {
+            /* 在下载未完成(或者未开始), 同时core_http_recv的返回值>0的情况, 需要判断是否出现了http返回值403错误, 以及判断包头格式是否异常 */
+            if (OTA_RESPONSE_OK != download_handle->http_rsp_status_code
+                    && OTA_RESPONSE_PARTIAL != download_handle->http_rsp_status_code) {
+                /* HTTP回复报文的code应该是200或者206, 否则这个下载链接不可用 */
+                res = STATE_DOWNLOAD_HTTPRSP_CODE_ERROR;
+            } else if (0 == download_handle->content_len) {
+                /* HTTP回复报文的header里面应该有Content-Length, 否则这个下载链接为trunked编码, 不可用 */
+                res = STATE_DOWNLOAD_HTTPRSP_HEADER_ERROR;
+            }
+            /* 如果没有上述code错误或者content_length字段错误, 则返回正数值, 表示下载到的字节数 */
+        }
+    }
+    break;
+    default:
+        break;
+    }
+    sysdep->core_sysdep_mutex_unlock(download_handle->recv_mutex);
+    return res;
+}
+
 
 /* 对aiot_download_task_desc_t结构体里面的指针所指向的内容进行深度释放 */
 int32_t _download_deep_free_task_desc(aiot_sysdep_portfile_t *sysdep, void *data)
@@ -591,6 +877,284 @@ exit:
     }
 
     return ret;
+}
+
+/* 解析URL, 从中解出来host, path */
+static int32_t _download_parse_url(const char *url, char *host, uint32_t max_host_len, char *path,
+                                   uint32_t max_path_len)
+{
+    char *host_ptr = (char *) strstr(url, "://");
+    uint32_t host_len = 0;
+    uint32_t path_len;
+    char *path_ptr;
+    char *fragment_ptr;
+
+    if (host_ptr == NULL) {
+        return STATE_OTA_PARSE_URL_HOST_IS_NULL;
+    }
+    host_ptr += 3;
+
+    path_ptr = strchr(host_ptr, '/');
+    if (NULL == path_ptr) {
+        return STATE_OTA_PARSE_URL_PATH_IS_NULL;
+    }
+
+    if (host_len == 0) {
+        host_len = path_ptr - host_ptr;
+    }
+
+    if (host_len >= max_host_len) {
+        return STATE_OTA_HOST_STRING_OVERFLOW;
+    }
+
+    memcpy(host, host_ptr, host_len);
+    host[host_len] = '\0';
+    fragment_ptr = strchr(host_ptr, '#');
+    if (fragment_ptr != NULL) {
+        path_len = fragment_ptr - path_ptr;
+    } else {
+        path_len = strlen(path_ptr);
+    }
+
+    if (path_len >= max_path_len) {
+        return STATE_OTA_PATH_STRING_OVERFLOW;
+    }
+
+    memcpy(path, path_ptr, path_len);
+    path[path_len] = '\0';
+    return STATE_SUCCESS;
+}
+
+/* 往固件服务器发送下载所需的GET请求 */
+int32_t aiot_download_send_request(void *handle)
+{
+    int32_t res = STATE_SUCCESS;
+    char host[OTA_HTTPCLIENT_MAX_URL_LEN] = { 0 };
+    char path[OTA_HTTPCLIENT_MAX_URL_LEN] = { 0 };
+    char *header_string = NULL;
+    aiot_sysdep_portfile_t *sysdep = NULL;
+    download_handle_t *download_handle = (download_handle_t *)handle;
+    if (NULL == download_handle) {
+        return STATE_DOWNLOAD_REQUEST_HANDLE_IS_NULL;
+    }
+    if (NULL == download_handle->task_desc) {
+        return STATE_DOWNLOAD_REQUEST_TASK_DESC_IS_NULL;
+    }
+    if (NULL == download_handle->task_desc->url) {
+        return STATE_DOWNLOAD_REQUEST_URL_IS_NULL;
+    }
+    sysdep = download_handle->sysdep;
+
+    {
+        uint32_t range_start = download_handle->range_start;
+        uint32_t range_end = download_handle->range_end;
+        uint8_t range_start_string_len = 0;
+        uint8_t range_end_string_len = 0;
+        char range_start_string[OTA_MAX_DIGIT_NUM_OF_UINT32] = {0};
+        char range_end_string[OTA_MAX_DIGIT_NUM_OF_UINT32] = {0};
+
+        /* 判断用户是否打算通过range下载整个固件中的一部分, 非全固件. */
+        /* 判断方法是看range_start和range_end是否同时为0, 或者前者为0, 后者为文件最后一个字节-1 */
+        /* 符合上述2个条件之一, 则认为用户打算下载整个固件中的一部分 */
+        uint8_t user_set_range = 1;
+        if (0 == range_start) {
+            if (0 == range_end || range_end == (download_handle->task_desc->size_total - 1)) {
+                user_set_range = 0;
+            }
+        }
+
+        /* 对于想下载完整固件的情况,  如果中间出现了断点续传的情况, 则从0开始, 根据已经下载多少字节开始算下载地址 */
+        /* 对于只想下载一段固件的情况, 如果中间出现了断点续传的情况, 则从range_start后面开始, 加上已下载的字节数作为一个续传的起始地址  */
+        uint32_t renewal_start = (user_set_range == 0) ? download_handle->size_fetched : (range_start +
+                                 download_handle->range_size_fetched);
+
+        core_int2str(renewal_start, range_start_string, &range_start_string_len);
+
+        /* 对于按照range下载的情况, 即range_end不为0的情况, 需要将其翻译成字符串 */
+        if (0 != range_end) {
+            core_int2str(range_end, range_end_string, &range_end_string_len);
+        }
+
+        {
+            char *prefix = "Accept: text/html, application/xhtml+xml, application/xml;q=0.9, */*;q=0.8\r\nRange: bytes=";
+            char *src[] = { prefix, range_start_string, "-", range_end_string};
+            uint32_t len = sizeof(src) / sizeof(char *);
+            res = core_sprintf(sysdep, &header_string, "%s%s%s%s\r\n", src, len, OTA_MODULE_NAME);
+            if (res != STATE_SUCCESS) {
+                if (header_string) {
+                    sysdep->core_sysdep_free(header_string);
+                }
+                return res;
+            }
+        }
+    }
+
+    res = _download_parse_url(download_handle->task_desc->url, host, OTA_HTTPCLIENT_MAX_URL_LEN, path,
+                              OTA_HTTPCLIENT_MAX_URL_LEN);
+    if (res != STATE_SUCCESS) {
+        if (header_string) {
+            sysdep->core_sysdep_free(header_string);
+        }
+        return res;
+    }
+
+    res = core_http_setopt(download_handle->http_handle, CORE_HTTPOPT_HOST, host);
+    if (res != STATE_SUCCESS) {
+        if (header_string) {
+            sysdep->core_sysdep_free(header_string);
+        }
+        return res;
+    }
+    res = core_http_connect(download_handle->http_handle);
+    if (res != STATE_SUCCESS) {
+        if (header_string) {
+            sysdep->core_sysdep_free(header_string);
+        }
+        return res;
+    }
+    core_http_request_t request = {
+        .method = "GET",
+        .path = path,
+        .header = header_string,
+        .content = NULL,
+        .content_len = 0
+    };
+    res = core_http_send(download_handle->http_handle, &request);
+    if (header_string) {
+        sysdep->core_sysdep_free(header_string);
+    }
+    /* core_http_send 返回的是发送的body的长度; 错误返回负数 */
+    if (res < STATE_SUCCESS) {
+        download_handle->download_status = DOWNLOAD_STATUS_START;
+        res = STATE_DOWNLOAD_SEND_REQUEST_FAILED;
+    } else {
+        download_handle->download_status = DOWNLOAD_STATUS_FETCH;
+        aiot_download_report_progress(download_handle, download_handle->percent);
+        res = STATE_SUCCESS;
+    }
+    return res;
+}
+
+/* 根据下载到的固件的内容, 计算其digest值 */
+static int32_t _download_digest_update(download_handle_t *download_handle, uint8_t *buffer, uint32_t buffer_len)
+{
+    int32_t res = STATE_SUCCESS;
+    if (AIOT_OTA_DIGEST_SHA256 == download_handle->task_desc->digest_method) {
+        core_sha256_update(download_handle->digest_ctx, buffer, buffer_len);
+    } else if (AIOT_OTA_DIGEST_MD5 == download_handle->task_desc->digest_method) {
+        res = utils_md5_update(download_handle->digest_ctx, buffer, buffer_len);
+    }
+    return res;
+}
+
+/* 对计算出来的digest值, 与云端下发的digest值进行比较 */
+static int32_t _download_digest_verify(download_handle_t *download_handle)
+{
+    uint8_t output[32] = {0};
+    uint8_t expected_digest[32] = {0};
+
+    if (AIOT_OTA_DIGEST_SHA256 == download_handle->task_desc->digest_method) {
+        core_str2hex(download_handle->task_desc->expect_digest, OTA_SHA256_LEN, expected_digest);
+        core_sha256_finish(download_handle->digest_ctx, output);
+        if (memcmp(output, expected_digest, 32) == 0) {
+            return STATE_SUCCESS;
+        }
+    } else if (AIOT_OTA_DIGEST_MD5 == download_handle->task_desc->digest_method) {
+        core_str2hex(download_handle->task_desc->expect_digest, OTA_MD5_LEN, expected_digest);
+        utils_md5_finish(download_handle->digest_ctx, output);
+        if (memcmp(output, expected_digest, 16) == 0) {
+            return STATE_SUCCESS;
+        }
+    }
+    return STATE_OTA_DIGEST_MISMATCH;
+}
+
+/* 对于收到的http报文进行处理的回调函数, 内部处理完后再调用用户的回调函数 */
+void _http_recv_handler(void *handle, const aiot_http_recv_t *packet, void *userdata)
+{
+    download_handle_t *download_handle = (download_handle_t *)userdata;
+    if (NULL == download_handle || NULL == packet) {
+        return;
+    }
+    switch (packet->type) {
+    case AIOT_HTTPRECV_STATUS_CODE : {
+        download_handle->http_rsp_status_code = packet->data.status_code.code;
+    }
+    break;
+    case AIOT_HTTPRECV_HEADER: {
+        if ((strlen(packet->data.header.key) == strlen("Content-Length")) &&
+                (memcmp(packet->data.header.key, "Content-Length", strlen(packet->data.header.key)) == 0)) {
+            uint32_t size = 0;
+
+            /* 在用户指定的range并非全部固件的情况下, content_len < size_total, 所以不能简单替换 */
+            core_str2uint(packet->data.header.value, (uint8_t)strlen(packet->data.header.value), &size);
+
+            /* 该字段表示用户期望总共下载多少字节. 如果字段为0, 表示未设置过, 则设置为总共的字节数 */
+            download_handle->content_len = (download_handle->content_len > 0) ? download_handle->content_len : size;
+        }
+    }
+    break;
+    case AIOT_HTTPRECV_BODY: {
+        int32_t percent = 0;
+        if (OTA_RESPONSE_OK != download_handle->http_rsp_status_code
+                /* HTTP回复报文的code应该是200或者206, 否则这个下载链接不可用 */
+                && OTA_RESPONSE_PARTIAL != download_handle->http_rsp_status_code) {
+            percent = AIOT_OTAERR_FETCH_FAILED;
+            core_log(download_handle->sysdep, STATE_DOWNLOAD_HTTPRSP_CODE_ERROR, "wrong http respond code\r\n");
+        } else if (0 == download_handle->content_len) {
+            /* HTTP回复报文的header里面应该有Content-Length, 否则这个下载链接为trunked编码, 不可用 */
+            percent = AIOT_OTAERR_FETCH_FAILED;
+            core_log(download_handle->sysdep, STATE_DOWNLOAD_HTTPRSP_HEADER_ERROR, "wrong http respond header\r\n");
+        } else {
+            /* 正常的固件的报文 */
+            /* 在按照多个range分片下载的情况下, 判断用户下载到的固件的累计大小是否超过了整体的值 */
+            if (download_handle->size_fetched > download_handle->task_desc->size_total) {
+                core_log(download_handle->sysdep, STATE_DOWNLOAD_FETCH_TOO_MANY, "downloaded exceeds expected\r\n");
+                break;
+            }
+
+            /* 该字段表示累计下载了多少字节, 不区分range */
+            download_handle->size_fetched += packet->data.body.len;
+            /* 该字段表示在这个range内总共下载了多少字节 */
+            download_handle->range_size_fetched += packet->data.body.len;
+
+            /* 当size_fetched*100超过uint32_t能表达的范围时, 比如239395702, 会导致percent计算错误, 因此需要一个更大的临时变量 */
+            uint64_t tmp_size_fetched = 0;
+            tmp_size_fetched = download_handle->size_fetched;
+            percent = (100 * tmp_size_fetched) / download_handle->task_desc->size_total;
+
+            /* 计算digest, 如果下载完成, 还要看看是否与云端计算出来的一致 */
+            _download_digest_update(download_handle, packet->data.body.buffer, packet->data.body.len);
+            if (download_handle->size_fetched == download_handle->task_desc->size_total) {
+                int32_t ret = _download_digest_verify(download_handle);
+                if (ret != STATE_SUCCESS) {
+                    percent = AIOT_OTAERR_CHECKSUM_MISMATCH;
+                    core_log(download_handle->sysdep, ret, "digest mismatch\r\n");
+                    aiot_download_report_progress(download_handle, AIOT_OTAERR_CHECKSUM_MISMATCH);
+                } else {
+                    core_log(download_handle->sysdep, STATE_OTA_DIGEST_MATCH, "digest matched\r\n");
+                }
+            }
+            download_handle->percent = percent;
+
+            /* 调用用户的回调函数, 将报文传给用户 */
+            if (NULL != download_handle->recv_handler) {
+                aiot_download_recv_t recv_data = {
+                    .type = AIOT_DLRECV_HTTPBODY,
+                    .data = {
+                        .buffer = packet->data.body.buffer,
+                        .len = packet->data.body.len,
+                        .percent = percent
+                    }
+                };
+                download_handle->recv_handler(download_handle, &recv_data, download_handle->userdata);
+            }
+        }
+    }
+    break;
+    default:
+        break;
+    }
 }
 
 /* 提供深度拷贝的底层函数 */

@@ -43,7 +43,8 @@ error_t storage_install_interface(storage_interface_t *interface)
         }
         memset(&config, 0, sizeof(storage_metadata_t));
         config.init = STORAGE_DEVICE_INIT_FLAG;
-        strcpy(config.storage_device_name, "w25q16");
+        // strcpy(config.storage_device_name, "w25q16");
+        strcpy(config.storage_device_name, "at24c64");
         config.data_size    = sizeof(storage_data_t);
         config.data_version = STORAGE_METADATA_VERSION;
         storage_write(metadata, &config);

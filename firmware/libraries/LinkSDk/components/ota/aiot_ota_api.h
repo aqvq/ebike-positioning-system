@@ -364,6 +364,122 @@ typedef enum {
     AIOT_OTAOPT_MAX
 } aiot_ota_option_t;
 
+/**
+ * @brief 调用 @ref aiot_download_setopt 接口时, option参数的可用值
+ *
+ */
+
+typedef enum {
+
+    /**
+     * @brief 设备通过HTTP与固件服务器建联时, 网络使用的安全凭据
+     *
+     * @details
+     *
+     * 该配置项用于为底层网络配置@ref aiot_sysdep_network_cred_t 安全凭据数据
+     *
+     * 1. 若该选项不配置, 那么HTTP将以tcp方式直接建联
+     *
+     * 2. 若@ref aiot_sysdep_network_cred_t 中option配置为@ref AIOT_SYSDEP_NETWORK_CRED_NONE , HTTP将以tcp方式直接建联
+     *
+     * 3. 若@ref aiot_sysdep_network_cred_t 中option配置为@ref AIOT_SYSDEP_NETWORK_CRED_SVRCERT_CA , HTTP将以tls方式建联
+     *
+     * 4. 若@ref aiot_sysdep_network_cred_t 中option配置为@ref AIOT_SYSDEP_NETWORK_CRED_SVRCERT_PSK , HTTP将以tls psk方式建联
+     *
+     * 数据类型: (aiot_sysdep_network_cred_t *)
+     */
+    AIOT_DLOPT_NETWORK_CRED,
+
+    /**
+     * @brief 设备通过HTTP访问固件下载服务器的端口号
+     *
+     * @details
+     *
+     * 如果使用的是tcp或者tls证书方式, 端口号设置为443
+     *
+     * 数据类型: (uint16_t *)
+     */
+    AIOT_DLOPT_NETWORK_PORT,
+
+    /**
+     * @brief 通过HTTP接收固件内容时, 在协议栈花费的最长时间
+     *
+     * @details
+     *
+     * 数据类型: (uint32_t *) 默认值: (5 * 1000) ms
+     */
+    AIOT_DLOPT_RECV_TIMEOUT_MS,
+
+    /**
+     * @brief HTTP 数据接收回调函数
+     *
+     * @details
+     *
+     * 数据类型: (aiot_download_recv_handler_t)
+     */
+    AIOT_DLOPT_RECV_HANDLER,
+
+    /**
+     * @brief 用户需要SDK暂存的上下文
+     *
+     * @details
+     *
+     * 当接收到HTTP数据时, 该上下文会从 @ref aiot_download_recv_handler_t 的 userdata 参数给出
+     *
+     * 数据类型: (void *)
+     */
+    AIOT_DLOPT_USERDATA,
+
+    /**
+     * @brief 设置download实例句柄所包含下载任务的具体内容
+     *
+     * @details
+     *
+     * 用户在收到OTA的mqtt消息后, 如果决定升级, 则需要通过该选项, 在download实例句柄中开辟内存,
+     * 将OTA消息中携带的url, version, digest method, sign等信息复制过来, 有了这些信息后才能开始下载任务
+     *
+     * 数据类型: (aiot_download_task_desc_t *)
+     *
+     **/
+    AIOT_DLOPT_TASK_DESC,
+
+    /**
+     * @brief 设置按照range下载的起始地址
+     *
+     * @details
+     *
+     * HTTP 范围请求(range requests)特性中, 表示从第该byte开始下载
+     * 如果指定从头开始下载, 则start的值为0
+     *
+     * 数据类型: (uint32_t *)
+     *
+     **/
+    AIOT_DLOPT_RANGE_START,
+
+    /**
+     * @brief 设置按照range下载的结束地址
+     *
+     * @details
+     * HTTP 范围请求(range requests)特性中, 表示下载到该byte后结束.
+     * 如果指定从头开始下载到10个byte后结束,
+     * 则需要指定start = 0, end = 9, 这样总共10个byte
+     *
+     * 数据类型: (uint32_t *)
+     *
+     **/
+    AIOT_DLOPT_RANGE_END,
+
+    /**
+    * @brief 当设备从固件下载服务器接收返回的http报文时, 每次从 @ref aiot_download_recv_handler_t 回调函数中给出的body最大长度
+    *
+    * @details
+    * 如果收到的数据没能达到这个长度, 则以aiot_download_recv_handler_t回调函数给出的长度是设备实际接收到的长度
+    *
+    * 数据类型: (uint32_t *) 默认值: (2 *1024) Bytes
+    */
+    AIOT_DLOPT_BODY_BUFFER_MAX_LEN,
+    AIOT_DLOPT_MAX
+} aiot_download_option_t;
 
 /**
  * @brief 设备端主动向云端查询升级任务
@@ -474,6 +590,124 @@ int32_t aiot_ota_report_version_ext(void *handle, char *product_key, char *devic
  *
  */
 int32_t aiot_ota_setopt(void *handle, aiot_ota_option_t option, void *data);
+
+/**
+ * @brief 初始化download实例并设置默认参数
+ *
+ * @return void*
+ * @retval 非NULL download实例句柄
+ * @retval NULL 初始化失败, 或者是没有设置portfile, 或者是内存不足无法分配download或者http实例
+ *
+ */
+void   *aiot_download_init();
+
+/**
+ * @brief 释放download实例句柄的资源
+ *
+ * @param[in] handle 指向download实例句柄的指针
+ *
+ * @return int32_t
+ * @retval STATE_DOWNLOAD_DEINIT_HANDLE_IS_NULL handle或者handle指向的内容为空
+ * @retval STATE_SUCCESS 执行成功
+ *
+ */
+int32_t aiot_download_deinit(void **handle);
+
+/**
+ * @brief 通过download实例句柄下载一段buffer
+ *
+ * @details
+ *
+ * 用户解析完OTA消息, 知道了固件的下载地址之后, 就可以用这个接口以HTTP下载固件内容
+ *
+ * 被下载到的内容, 会通过回调函数传递给用户, 用户调用 @ref aiot_download_setopt 把自己的数据处理回调函数设置给SDK
+ *
+ * @param[in] handle 指向download实例句柄的指针
+ *
+ * @return int32_t
+ * @retval >STATE_SUCCESS 表示下载到的字节数
+ * @retval STATE_DOWNLOAD_HTTPRSP_CODE_ERROR 下载所使用的url链接不可访问, 返回的code并非200或者206
+ * @retval STATE_DOWNLOAD_FINISHED 整个固件包下载完成
+ * @retval STATE_DOWNLOAD_RANGE_FINISHED 分段下载的时候, 单个分段下载完成
+ * @retval STATE_DOWNLOAD_HTTPRSP_HEADER_ERROR 访问下载链接后http的回复报文中并没有Content-Length字段
+ * @retval STATE_DOWNLOAD_RECV_HANDLE_IS_NULL download句柄为空
+ * @retval STATE_DOWNLOAD_RENEWAL_REQUEST_SENT 进行断点续传往固件服务器重新发送了下载请求
+ * @retval 其他出错信息 请参考@ref aiot_state_api.h
+ *
+ */
+int32_t aiot_download_recv(void *handle); /* 返回条件: 网络出错 | 校验出错 | 读到EOF | buf填满 */
+
+/**
+ * @brief 设置download句柄参数
+ *
+ * @details
+ *
+ * 配置固件下载会话的选项, 常见需要设置的选项包括
+ *
+ * + `AIOT_DLOPT_RECV_HANDLER`: 用户告诉SDK, 当SDK收到固件内容的时候, 调用哪个用户函数来传出固件内容缓冲区
+ * + `AIOT_DLOPT_NETWORK_CRED`: 可以配置是走HTTP还是走HTTPS下载固件内容
+ * + `AIOT_DLOPT_BODY_BUFFER_MAX_LEN`: 这是个缓冲区的长度, SDK下载中, 每当填满这个长度就调用一次用户回调, 所以这里设置的越大, 下载越快, 内存开销也越大
+ *
+ * @param[in] handle download句柄
+ * @param[in] option 配置选项, 更多信息请参考@ref aiot_download_option_t
+ * @param[in] data   配置选项数据, 更多信息请参考@ref aiot_download_option_t
+ *
+ * @return int32_t
+ * @retval STATE_SUCCESS 参数设置成功
+ * @retval STATE_DOWNLOAD_SETOPT_HANDLE_IS_NULL download句柄为空
+ * @retval STATE_DOWNLOAD_SETOPT_DATA_IS_NULL data字段为空
+ * @retval STATE_DOWNLOAD_SETOPT_COPIED_DATA_IS_NULL 拷贝task_desc失败
+ * @retval STATE_DOWNLOAD_SETOPT_MALLOC_SHA256_CTX_FAILED  为shs256算法的context分配内存失败
+ * @retval STATE_DOWNLOAD_SETOPT_MALLOC_MD5_CTX_FAILED     为MD5算法的context分配内存失败
+ * @retval 其他出错信息 请参考@ref aiot_state_api.h
+ *
+ */
+int32_t aiot_download_setopt(void *handle, aiot_download_option_t option, void *data);
+
+/**
+ * @brief 上报下载完成度的百分比或者错误码
+ *
+ * @details
+ *
+ * 在设备开始下载固件的过程之后, 都可以用这个接口向云端上报进展情况, 包括下载进度或出错信息
+ *
+ * + 如果下载是正常的, 可以整数形式上报, 当前已下载的内容占固件整体大小的百分比, percent参数, SDK会自动计算好, 在回调中传给用户
+ * + 如果下载异常或者下载之后固件的烧录异常了, 也可以用这个接口把异常告诉云端, 设备和云端的协议错误码约定见 @ref aiot_ota_protocol_errcode_t
+ * + 通过 @ref aiot_download_report_progress 上报的内容都会影响控制台的显示, 比如显示OTA升级进度, 显示OTA升级失败等
+ *
+ * @param[in] handle download句柄
+ * @param[in] percent 当前所下载内容完成度的百分比或者错误码
+ *
+ * @return int32_t
+ * @retval STATE_SUCCESS 参数设置成功
+ * @retval STATE_DOWNLOAD_REPORT_HANDLE_IS_NULL 上报时handle为空
+ * @retval STATE_DOWNLOAD_REPORT_TASK_DESC_IS_NULL 上报时task_desc为空, 无法找到相应的product_key, device_name
+ * @retval 其他出错信息 请参考@ref aiot_state_api.h
+ *
+ */
+int32_t aiot_download_report_progress(void *handle, int32_t percent);
+
+/**
+ * @brief 向云端发送GET固件报文请求
+ *
+ * @details
+ *
+ * 设备通过OTA消息回调函数知道了固件下载地址后, 就可以调用这个接口, 下载一段固件
+ *
+ * + 这段长度可由`AIOT_DLOPT_RANGE_START`和`AIOT_DLOPT_RANGE_END`选项设置
+ * + 如果不做设置, 则默认SDK会整段去请求固件内容, 但每到填满1次用户buffer就会通知用户1次, buffer长度用`AIOT_DLOPT_BODY_BUFFER_MAX_LEN`选项配置
+ *
+ * @param[in] handle download句柄, 包含了固件的url等信息
+ *
+ * @return int32_t
+ * @retval STATE_SUCCESS 请求发送成功
+ * @retval STATE_DOWNLOAD_REQUEST_HANDLE_IS_NULL 发送GET请求的时候handle为空
+ * @retval STATE_DOWNLOAD_REQUEST_URL_IS_NULL 发送GET请求的时候task_desc不为空, 但是其中的url为空
+ * @retval STATE_DOWNLOAD_SEND_REQUEST_FAILED 发送GET请求的时候http底层发包逻辑报错
+ * @retval STATE_DOWNLOAD_REQUEST_TASK_DESC_IS_NULL 发送GET请求的时候task_desc字段为空
+ * @retval 其他出错信息 请参考@ref aiot_state_api.h
+ */
+int32_t aiot_download_send_request(void *handle);
 
 /**
  * @brief -0x0900~-0x09FF表达SDK在OTA模块内的状态码, 也包含下载时使用的`STATE_DOWNLOAD_XXX`

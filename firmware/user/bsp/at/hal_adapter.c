@@ -6,6 +6,8 @@
 #include "bsp/at/at.h"
 #include "bsp/mcu/mcu.h"
 
+#define TAG "EC800M"
+
 /*huart1 for at module*/
 extern UART_HandleTypeDef huart1;
 /*huart2 for log printf*/
@@ -49,7 +51,7 @@ static void _usart_recv_user(uint8_t *data, uint32_t size)
         return;
     }
     /* 为调试方便，在中断接收中打印了数据，正式生产需删除 */
-    printf("<<< %s", data);
+    // printf("<<< %s", data);
     aiot_at_hal_recv_handle(data, size);
     return;
 }
@@ -128,7 +130,7 @@ static HAL_StatusTypeDef K_UART_Transmit(UART_HandleTypeDef *huart, uint8_t *pDa
 int32_t at_uart_send(uint8_t *p_data, uint16_t len, uint32_t timeout)
 {
     // if (HAL_OK == HAL_UART_Transmit_DMA(&huart1, (uint8_t *)p_data, len)) {
-    printf(">>> %s", p_data);
+    // printf(">>> %s", p_data);
     if (HAL_OK == K_UART_Transmit(&huart1, (uint8_t *)p_data, len)) {
         return len;
     } else {
@@ -136,26 +138,9 @@ int32_t at_uart_send(uint8_t *p_data, uint16_t len, uint32_t timeout)
     }
 }
 
-#ifdef __GNUC__
-int _write(int fd, char *ptr, int len)
-{
-    HAL_UART_Transmit(&huart2, (uint8_t *)ptr, len, 0xFFFF);
-    return len;
-}
-
-#else
-
-int fputc(int ch, FILE *f)
-{
-    HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFF); // 输出指向串口USART3
-    return ch;
-}
-
-#endif
-
 int32_t at_hal_init(void)
 {
-    printf("at_hal_init \r\n");
+    LOGD(TAG, "at_hal_init");
 
     /*设置设备系统接口及网络接口*/
     aiot_install_os_api(&g_aiot_freertos_api);
@@ -194,9 +179,11 @@ int32_t at_hal_init(void)
 
 error_t ec800m_init()
 {
+    LOGD(TAG, "device init");
     ec800m_vbat_on();
     ec800m_gnss_ant_on();
     ec800m_vbus_off();
     delay_ms(30);
     ec800m_on();
+    ec800m_reset();
 }

@@ -15,7 +15,6 @@ extern "C" {
 #include "aiot_state_api.h"
 #include "aiot_sysdep_api.h"
 #include "aiot_mqtt_api.h"
-#include "aiot_mqtt_props_api.h"
 
 /**
  *
@@ -85,24 +84,6 @@ extern "C" {
 #define CORE_MQTT_DYNREG_CONNACK_RCODE_SERVER_UNAVAILABLE           (0x03)
 #define CORE_MQTT_DYNREG_CONNACK_RCODE_BAD_USERNAME_PASSWORD        (0x04)
 
-/* MQTT 5.0 conack error code */
-#define CORE_MQTT_V5_CONNACK_RCODE_UNACCEPTABLE_PROTOCOL_VERSION    (0x84)
-#define CORE_MQTT_V5_CONNACK_RCODE_BAD_USERNAME_PASSWORD            (0x86)
-#define CORE_MQTT_V5_CONNACK_RCODE_SERVER_UNAVAILABLE               (0x88)
-#define CORE_MQTT_V5_CONNACK_RCODE_NOT_AUTHORIZED                   (0x87)
-
-/* MQTT 5.0 conack error code */
-#define CORE_MQTT_V5_PROPERTY_ID_LEN                                 (1)
-#define CORE_MQTT_V5_USER_PROPERTY_KEY_LEN                           (2)
-#define CORE_MQTT_V5_USER_PROPERTY_VALUE_LEN                         (2)
-#define CORE_MQTT_V5_TOPIC_ALIAS_LEN                                 (2)
-#define CORE_MQTT_V5_TOPIC_ALIAS_MAX_LEN                             (2)
-#define CORE_MQTT_V5_RECEIVE_MAX_LEN                                 (2)
-#define CORE_MQTT_V5_RESPONSE_TOPIC_LEN                              (2)
-#define CORE_MQTT_V5_CORELATION_DATA_LEN                             (2)
-#define CORE_MQTT_V5_REASON_STRING_LEN                               (2)
-#define CORE_MQTT_V5_DISCONNECT_REASON_CODE_LEN                      (1)
-
 /* MQTT 3.1 Disconnect Packet */
 #define CORE_MQTT_DISCONNECT_PKT_TYPE               (0xE0)
 
@@ -145,9 +126,6 @@ extern "C" {
 #define CORE_MQTT_PUBREL_PKT_TYPE                   (0x60)
 #define CORE_MQTT_PUBCOMP_PKT_TYPE                  (0x70)
 
-/* MQTT 5.0 implemented Packet */
-#define CORE_MQTT_SERVER_DISCONNECT_PKT_TYPE        (0xE0)
-
 typedef struct {
     uint8_t    *buffer;
     uint32_t    len;
@@ -182,7 +160,6 @@ typedef struct {
 } core_mqtt_event_t;
 
 typedef void (*core_mqtt_process_handler_t)(void *context, aiot_mqtt_event_t *event, core_mqtt_event_t *core_event);
-
 typedef struct {
     core_mqtt_process_handler_t handler;
     void *context;
@@ -221,6 +198,7 @@ typedef struct {
     uint64_t rtt;
 } core_mqtt_nwkstats_info_t;
 
+/* mqtt send/recv prepare handler, example(compressor、statistics) */
 typedef struct {
     char *topic;
     uint16_t topic_len;
@@ -290,38 +268,15 @@ typedef struct {
     struct core_list_head pub_list;
     struct core_list_head process_data_list;
     aiot_mqtt_recv_handler_t recv_handler;
-    aiot_mqtt_event_handler_t event_handler;    
+    aiot_mqtt_event_handler_t event_handler;
     core_mqtt_compress_data_t compress;
     core_mqtt_compress_data_t decompress;
-
     /* network info stats */
     core_mqtt_nwkstats_info_t nwkstats_info;
 
     void *userdata;
     uint16_t repub_list_limit;
-
-    /* mqtt protovol version */
-    uint8_t protocol_version;
-
-    /* mqtt 5.0 specific*/
-    void *topic_alias_mutex;
-    struct core_list_head rx_topic_alias_list;
-    struct core_list_head tx_topic_alias_list;
-    mqtt_properties_t *conn_props;
-    uint8_t use_assigned_clientid;
-    uint32_t tx_packet_max_size;
-    uint32_t tx_topic_alias_max;
-    uint32_t tx_topic_alias;
-    uint16_t server_receive_max;
-    uint8_t flow_control_enabled;
 } core_mqtt_handle_t;
-
-/* topic alias node. mqtt 5.0 specific*/
-typedef struct {
-    char *topic;
-    uint16_t topic_alias;
-    struct core_list_head linked_node;
-} core_mqtt_topic_alias_node_t;
 
 /* default configuration */
 #define CORE_MQTT_MODULE_NAME                      "MQTT"
@@ -347,12 +302,6 @@ typedef struct {
 
 #define CORE_MQTT_NWKSTATS_RTT_THRESHOLD           (10000)
 
-/* default settings for mqtt 5.0 */
-#define CORE_TX_PKT_MAX_LENGTH                      (1024 * 256)
-#define CORE_DEFAULT_SERVER_RECEIVE_MAX             (10)
-#define CORE_MQTT_USER_PROPERTY_KEY_MAX_LEN         (128)  /* max key length for user property */
-#define CORE_MQTT_USER_PROPERTY_VALUE_MAX_LEN       (128)  /* max value length for user property */
-
 typedef enum {
     CORE_MQTTOPT_APPEND_PROCESS_HANDLER,
     CORE_MQTTOPT_REMOVE_PROCESS_HANDLER,
@@ -367,13 +316,7 @@ char *core_mqtt_get_device_name(void *handle);
 uint16_t core_mqtt_get_port(void *handle);
 int32_t core_mqtt_get_nwkstats(void *handle, core_mqtt_nwkstats_info_t *nwk_stats_info);
 int32_t _core_mqtt_topic_compare(char *topic, uint32_t topic_len, char *cmp_topic, uint32_t cmp_topic_len);
-int32_t core_mqtt_props_bound(mqtt_properties_t *props);
-int32_t core_mqtt_props_write(mqtt_properties_t *props, uint8_t *data, uint32_t size);
-int32_t core_mqtt_props_read(uint8_t *data, uint32_t size, mqtt_properties_t *props);
 
-
-int32_t _write_variable(uint32_t input, uint8_t *output);
-int32_t _read_variable(uint8_t *input, uint32_t *output);
 #if defined(__cplusplus)
 }
 #endif
