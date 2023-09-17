@@ -45,7 +45,7 @@
 extern uint32_t SystemCoreClock;
 #endif
 
-#include "common_config.h"
+#include "common/config.h"
 
 /* Constants that describe the hardware and memory usage. */
 #define configCPU_CLOCK_HZ               (SystemCoreClock)

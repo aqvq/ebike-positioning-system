@@ -10,16 +10,13 @@
 #include "task.h"
 #include "timers.h"
 #include "aliyun_shadow.h"
-#include "data/gateway_config.h"
-// #include "can_screen_param.h"
-// #include "sensor_position_manager.h"
 #include "log/log.h"
 #include "main/app_main.h"
 #include "cJSON.h"
 #include "bsp/mcu/mcu.h"
 #include "data/gnss_settings.h"
 
-static const char *TAG = "ALIYUN_SHADOW";
+#define TAG  "ALIYUN_SHADOW"
 
 extern void *g_shadow_handle;
 
@@ -97,14 +94,7 @@ int8_t update_shadow(void *shadow_handle)
 
     cJSON *root = cJSON_CreateObject();
 
-    // 1. 网关配置信息
-    res = read_gateway_config_text(text, NULL);
-    if (res == 0) {
-        cJSON_AddStringToObject(root, "gateway_config", text);
-        flag = true;
-    }
-
-    // 2. GNSS配置信息
+    // GNSS配置信息
     res = read_gnss_settings_text(text);
     if (res == 0) {
         cJSON_AddStringToObject(root, "gnss_settings", text);
@@ -179,37 +169,7 @@ static int8_t shadow_recv_payload_write_flash(const char *payload)
     if (obj_state_desired != NULL && obj_metadata_desired != NULL && obj_state_reported != NULL && obj_metadata_reported != NULL) {
         bool flag = false;
 
-        // 1. gateway_config
-        cJSON *obj_metadata_desired_gateway_config  = cJSON_GetObjectItem(obj_metadata_desired, "gateway_config");
-        cJSON *obj_metadata_reported_gateway_config = cJSON_GetObjectItem(obj_metadata_reported, "gateway_config");
-
-        if (obj_metadata_desired_gateway_config != NULL && obj_metadata_reported_gateway_config != NULL) {
-            cJSON *obj_metadata_desired_gateway_config_timestamp  = cJSON_GetObjectItem(obj_metadata_desired_gateway_config, "timestamp");
-            cJSON *obj_metadata_reported_gateway_config_timestamp = cJSON_GetObjectItem(obj_metadata_reported_gateway_config, "timestamp");
-
-            // 1. 网关配置信息
-            if (obj_metadata_desired_gateway_config_timestamp != NULL && obj_metadata_reported_gateway_config_timestamp != NULL) {
-                // 应用端的时间戳比设备端报告的时间戳大，表示是新的参数
-                if (obj_metadata_desired_gateway_config_timestamp->valuedouble > obj_metadata_reported_gateway_config_timestamp->valuedouble) {
-                    cJSON *obj_gateway_config = cJSON_GetObjectItem(obj_state_desired, "gateway_config");
-                    if (obj_gateway_config != NULL) {
-                        LOGI(TAG, "gateway_config = %s.", obj_gateway_config->valuestring);
-
-                        // 写FLASH
-                        int8_t res = write_gateway_config_text(obj_gateway_config->valuestring);
-
-                        if (res == 0) {
-                            flag = true;
-                            LOGI(TAG, "write gateway config OK");
-                        } else {
-                            LOGE(TAG, "write gateway config ERROR(%d)", res);
-                        }
-                    }
-                }
-            }
-        }
-
-        // 2. gnss_settings
+        // gnss_settings
         cJSON *obj_metadata_desired_gnss_settings  = cJSON_GetObjectItem(obj_metadata_desired, "gnss_settings");
         cJSON *obj_metadata_reported_gnss_settings = cJSON_GetObjectItem(obj_metadata_reported, "gnss_settings");
         if (obj_metadata_desired_gnss_settings != NULL && obj_metadata_reported_gnss_settings != NULL) {
@@ -217,9 +177,8 @@ static int8_t shadow_recv_payload_write_flash(const char *payload)
             cJSON *obj_metadata_reported_gnss_settings_timestamp = cJSON_GetObjectItem(obj_metadata_reported_gnss_settings, "timestamp");
             if (obj_metadata_desired_gnss_settings_timestamp != NULL && obj_metadata_reported_gnss_settings_timestamp != NULL) {
                 // 应用端的时间戳比设备端报告的时间戳大，表示是新的参数
-                // TODO: timestamp是double?
                 // if (obj_metadata_desired_gnss_settings_timestamp->valuedouble > obj_metadata_reported_gnss_settings_timestamp->valuedouble) {
-                if (obj_metadata_desired_gnss_settings_timestamp->valueint > obj_metadata_reported_gnss_settings_timestamp->valueint) {
+                if (obj_metadata_desired_gnss_settings_timestamp->valueint >= obj_metadata_reported_gnss_settings_timestamp->valueint) {
                     cJSON *obj_gnss_settings = cJSON_GetObjectItem(obj_state_desired, "gnss_settings");
                     if (obj_gnss_settings != NULL) {
                         LOGI(TAG, "gnss_settings = %s.", obj_gnss_settings->valuestring);
@@ -227,7 +186,7 @@ static int8_t shadow_recv_payload_write_flash(const char *payload)
                         // 写FLASH
                         int8_t res = write_gnss_settings_text(obj_gnss_settings->valuestring);
 
-                        if (res == 0) {
+                        if (res == OK) {
                             flag = true;
                             LOGI(TAG, "write gnss settings OK");
                         } else {
@@ -237,14 +196,6 @@ static int8_t shadow_recv_payload_write_flash(const char *payload)
                 }
             }
         }
-
-        // // 3. 重启ESP32使配置生效
-        // if (flag)
-        // {
-        //     // 重启
-        //     LOGE(TAG, "receive parameter from shadow, restart");
-        //     esp_restart(); // 此时4G通讯正常，只重启ESP32模块
-        // }
 
         if (flag) {
             LOGW(TAG, "There are new parameters");
@@ -257,27 +208,12 @@ static int8_t shadow_recv_payload_write_flash(const char *payload)
             return -20;
         }
     }
+
     // 2. 云平台上无历史reported数据
     else if (obj_state_desired != NULL && obj_metadata_desired != NULL) {
         bool flag = false;
 
-        // 1. gateway_config
-        cJSON *obj_gateway_config = cJSON_GetObjectItem(obj_state_desired, "gateway_config");
-        if (obj_gateway_config != NULL) {
-            LOGI(TAG, "gateway_config = %s.", obj_gateway_config->valuestring);
-
-            // 写FLASH
-            int8_t res = write_gateway_config_text(obj_gateway_config->valuestring);
-
-            if (res == 0) {
-                flag = true;
-                LOGI(TAG, "write gateway config OK");
-            } else {
-                LOGE(TAG, "write gateway config ERROR(%d)", res);
-            }
-        }
-
-        // 2. gnss_settings
+        // gnss_settings
         cJSON *obj_gnss_settings = cJSON_GetObjectItem(obj_state_desired, "gnss_settings");
         if (obj_gnss_settings != NULL) {
             LOGI(TAG, "gnss_settings = %s.", obj_gnss_settings->valuestring);
@@ -285,7 +221,7 @@ static int8_t shadow_recv_payload_write_flash(const char *payload)
             // 写FLASH
             int8_t res = write_gnss_settings_text(obj_gnss_settings->valuestring);
 
-            if (res == 0) {
+            if (res == OK) {
                 flag = true;
                 LOGI(TAG, "write gnss settings OK");
             } else {

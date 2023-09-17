@@ -3,7 +3,7 @@
 #include <string.h>
 #include "FreeRTOS.h"
 #include "util.h"
-#include "common_config.h"
+#include "common/config.h"
 #include "aiot_state_api.h"
 #include "storage/storage.h"
 #include "bsp/at/at.h"

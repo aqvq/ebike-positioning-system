@@ -1,7 +1,7 @@
 #ifndef __GNSS_SETTINGS_H
 #define __GNSS_SETTINGS_H
 
-#include "error_type.h"
+#include "common/error_type.h"
 
 typedef struct
 {
@@ -17,6 +17,15 @@ typedef struct
     // bit67: reserved
     uint8_t gnss_mode;
 }gnss_settings_t;
+
+#define GNSS_AGPS_MSK          (1 << 0) ///< 是否开启agps
+#define GNSS_APFLASH_MSK       (1 << 1) ///< 是否开启apflash
+#define GNSS_AUTOGPS_MSK       (1 << 2) ///< 是否开启autogps
+#define GNSS_MODE_CONFIG_MSK   (7 << 3) ///< GPS模式配置
+#define GNSS_AGPS_SHIFT        (0)
+#define GNSS_APFLASH_SHIFT     (1)
+#define GNSS_AUTOGPS_SHIFT     (2)
+#define GNSS_MODE_CONFIG_SHIFT (3)
 
 error_t read_gnss_settings(gnss_settings_t *config);
 error_t write_gnss_settings(gnss_settings_t *config);

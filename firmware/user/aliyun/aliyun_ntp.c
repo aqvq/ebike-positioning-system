@@ -7,7 +7,7 @@
 #include "log/log.h"
 #include "utils/util.h"
 
-static const char *TAG = "ALIYUN_NTP";
+#define TAG  "ALIYUN_NTP"
 
 static void *ntp_handle = NULL;
 

@@ -1,7 +1,7 @@
 #ifndef __DEVICE_INFO_H
 #define __DEVICE_INFO_H
 
-#include "error_type.h"
+#include "common/error_type.h"
 
 /* 白名单模式下用于保存deviceSecret的结构体定义 */
 typedef struct

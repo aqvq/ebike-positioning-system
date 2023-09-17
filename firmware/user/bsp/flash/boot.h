@@ -1,7 +1,7 @@
 #ifndef __BOOT_OB_H
 #define __BOOT_OB_H
 
-#include "error_type.h"
+#include "common/error_type.h"
 
 error_t boot_configure_boot_from_bootloader(void);
 error_t boot_configure_boot_from_flash(void);

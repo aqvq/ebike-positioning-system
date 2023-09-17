@@ -1,4 +1,3 @@
-
 #include "device_info.h"
 #include "storage/storage.h"
 #include "cJSON.h"
@@ -7,14 +6,14 @@
 error_t read_device_info(devinfo_wl_t *devinfo_wl)
 {
     error_t err = OK;
-    err         = storage_read(aliyun_devinfo_wl, devinfo_wl);
+    err         = storage_read(device_info, devinfo_wl);
     return err;
 }
 
 error_t write_device_info(devinfo_wl_t *devinfo_wl)
 {
     error_t err = OK;
-    err         = storage_write(aliyun_devinfo_wl, devinfo_wl);
+    err         = storage_write(device_info, devinfo_wl);
     return err;
 }
 
@@ -48,8 +47,8 @@ error_t device_info_print(devinfo_wl_t *config, char *output, uint16_t *output_l
     cJSON_AddStringToObject(root, "name", config->device_name);
     cJSON_AddStringToObject(root, "secret", config->device_secret);
 
-    char *json_string       = cJSON_PrintUnformatted(root);
-    size_t json_string_len  = strlen(json_string);
+    char *json_string      = cJSON_PrintUnformatted(root);
+    size_t json_string_len = strlen(json_string);
     // output[json_string_len] = '\0';
 
     if (output_len) {

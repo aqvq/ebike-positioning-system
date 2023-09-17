@@ -2,8 +2,7 @@
 #ifndef __UPDATE_H
 #define __UPDATE_H
 
-#include "error_type.h"
-#include "data/partition_info.h"
+#include "common/error_type.h"
 #include "utils/macros.h"
 
 #ifdef STM32F407xx
@@ -25,10 +24,9 @@
 #define APP2_FLASH_END_ADDRESS (FLASH_END_ADDRESS)
 #endif
 
-error_t iap_update_partition(app_info_t *new);
-error_t iap_init(uint8_t id);
+error_t iap_init();
 error_t iap_deinit();
 error_t iap_write(uint8_t *buffer, uint32_t length);
-error_t iap_erase(uint8_t id);
+error_t iap_erase();
 
 #endif // !__UPDATE_H

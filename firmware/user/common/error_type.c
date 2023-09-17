@@ -5,7 +5,7 @@
  * @FilePath: \firmware\user\common\error_type.c
  */
 
-#include "error_type.h"
+#include "common/error_type.h"
 
 #if ERROR_USING_STRING_TABLE
 // 错误码的字符串常量表

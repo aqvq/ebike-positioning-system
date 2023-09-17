@@ -28,7 +28,6 @@
 #include "aliyun_ntp.h"
 #include "storage/storage.h"
 #include "aiot_logpost_api.h"
-#include "main/app_config.h"
 #include "aliyun_message_handle.h"
 #include "aliyun_shadow.h"
 
@@ -37,7 +36,7 @@
 // 关闭EC200模块并重启ESP32, 定义在main中
 extern void ec800m_poweroff_and_mcu_restart(void);
 
-static const char *TAG = "ALIYUN_PROTOCOL";
+#define TAG  "ALIYUN_PROTOCOL"
 
 // extern int32_t at_hal_init(void);
 

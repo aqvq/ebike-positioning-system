@@ -8,19 +8,7 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 
-// gnss_mode:
-// bit 0 1 2 3 4 5 6 7
-// bit0: gnss agps enable/disable
-// bit1: gnss apflash enable/disable
-// bit2: gnss autogps enable/disable
-// bit345: gnss mode config @ref ec800m_at_gnss_config
-// bit67: reserved
-#define GNSS_AGPS_MSK        (1 << 0) ///< 是否开启agps
-#define GNSS_APFLASH_MSK     (1 << 1) ///< 是否开启apflash
-#define GNSS_AUTOGPS_MSK     (1 << 2) ///< 是否开启autogps
-#define GNSS_MODE_CONFIG_MSK (7 << 3) ///< GPS模式配置
-
-#define GNSS_MAX_RETRY       (10)
+#define GNSS_MAX_RETRY         (10)
 
 /// @brief GNSS初始化
 /// @param

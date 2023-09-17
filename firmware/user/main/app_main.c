@@ -1,10 +1,3 @@
-/*
- * @Date: 2023-08-31 15:54:25
- * @LastEditors: ShangWentao shangwentao
- * @LastEditTime: 2023-08-31 17:07:57
- * @FilePath: \firmware\user\main\app_main.c
- */
-
 #include <stdio.h>
 #include <string.h>
 #include "main.h"
@@ -12,8 +5,6 @@
 #include "task.h"
 #include "stream_buffer.h"
 #include "log/log.h"
-#include "data/gateway_config.h"
-#include "app_config.h"
 #include "protocol/host/host_protocol.h"
 #include "cJSON.h"
 #include "storage/storage.h"
@@ -21,49 +12,32 @@
 #include "aiot_at_api.h"
 #include "bsp/at/at.h"
 #include "app_main.h"
-#include "protocol/uart/uart_gateway_config.h"
 #include "gnss/gnss.h"
 #include "utils/util.h"
-#include "error_type.h"
+#include "common/error_type.h"
 #include "bsp/eeprom/at24c64.h"
 #include "bsp/mcu/mcu.h"
-#include "data/partition_info.h"
 #include "bsp/flash/boot.h"
 #include "upgrade/iap.h"
 #include "bsp/flash/flash.h"
 #include "bsp/mcu/mcu.h"
+#include "common/config.h"
+#include "protocol/uart/uart_config.h"
 
-static const char *TAG = "MAIN";
-volatile uint32_t ulHighFrequencyTimerTicks;
-char g_ec800m_apn_cmd[256];
+#define TAG "MAIN"
 
 //--------------------------------------全局变量---------------------------------------------
 
-// 网关参数，开机时从FLASH中读取；若读取失败，则使用如下默认值
-gateway_config_t g_gateway_config = {.apn          = "cmiot",
-                                     .apn_username = "",
-                                     .apn_password = ""};
-
-// EC800m模块APN设置AT指令
+volatile uint32_t ulHighFrequencyTimerTicks;
 char g_ec800m_apn_cmd[256];
-
-/* OTA升级标志，定义在main.c中 */
 uint8_t g_app_upgrade_flag = 0;
-
-/* 传感器BLE包数计数(MQTT通讯有效),定义在main.c中 */
-uint16_t g_ble_num_mqtt = 0;
-
-int g_major_version = 0; /* 当前程序major版本 */
-int g_minor_version = 0; /* 当前程序minor版本 */
-int g_patch_version = 0; /* 当前程序patch版本 */
-extern void app_init();
 
 void print_welcome_message(void)
 {
     LOG("*************************************************************");
     LOG("*                                                           *");
     LOG("*              THIS IS E-Bike Positioning Device            *");
-    LOG("*                SOFTWARE VERSION: %01d.%01d.%02d                   *", g_major_version, g_minor_version, g_patch_version);
+    LOG("*                SOFTWARE VERSION: %d.%d.%d                   *", APP_VERSION_MAJOR, APP_VERSION_MINOR, APP_VERSION_BUILD);
     LOG("*                                                           *");
 #if HOST_ENABLED
     LOG("*                        HOST_ENABLED                       *");
@@ -71,31 +45,12 @@ void print_welcome_message(void)
 #if MQTT_ENABLED
     LOG("*                        MQTT_ENABLED                       *");
 #endif
-#if UART_GATEWAY_CONFIG_ENABLED
-    LOG("*                 UART_GATEWAY_CONFIG_ENABLED               *");
+#if UART_CONFIG_ENABLED
+    LOG("*                 UART_CONFIG_ENABLED               *");
 #endif
     LOG("*                  Created By Shang Wentao                  *");
     LOG("*                                                           *");
     LOG("*************************************************************");
-}
-
-static void init_gateway_config(void)
-{
-    LOGI(TAG, "--- gateway config ---");
-
-    int8_t res = read_gateway_config(&g_gateway_config);
-    if (res != OK) {
-        LOGI(TAG, "read gateway config failed (%d)", res);
-    }
-
-    // EC800m模块APN设置AT指令
-    sprintf(g_ec800m_apn_cmd, "AT+QICSGP=1,1,\"%s\",\"%s\",\"%s\",1\r\n", g_gateway_config.apn, g_gateway_config.apn_username, g_gateway_config.apn_password);
-
-    LOGI(TAG, "apn=%s", g_gateway_config.apn);
-    LOGI(TAG, "apn_username=%s", g_gateway_config.apn_username);
-    LOGI(TAG, "apn_password=%s", g_gateway_config.apn_password);
-    LOGI(TAG, "apn_cmd=%s", g_ec800m_apn_cmd);
-    LOGI(TAG, "----------------------");
 }
 
 void cjson_init()
@@ -113,15 +68,6 @@ void ec800m_poweroff_and_mcu_restart(void)
     ec800m_at_poweroff(); // 关闭整个4G模块
 #endif
     mcu_restart();
-}
-
-void get_running_version(void)
-{
-    app_info_t app_info;
-    read_app_current(&app_info);
-    g_major_version = app_info.version_major;
-    g_minor_version = app_info.version_minor;
-    g_patch_version = app_info.version_patch;
 }
 
 error_t storage_init()
@@ -156,22 +102,13 @@ void app_main(void *p)
     storage_init();
     // 初始化cjosn库
     cjson_init();
-    // 初始化网关参数
-    init_gateway_config();
-    // 获取网关固件版本
-    get_running_version();
-    // 打印app info
-    app_init();
     // 打印开机信息
     print_welcome_message();
     // 初始化设备
     ec800m_init();
 
-    LOGD(TAG, "Current Bank: %d", boot_get_current_bank());
-    boot_swap_bank();
-
-#if UART_GATEWAY_CONFIG_ENABLED
-    xTaskCreate(uart_gateway_config_task, UART_GATEWAY_CONFIG_TASK_NAME, UART_GATEWAY_CONFIG_TASK_DEPTH, NULL, 3, NULL);
+#if UART_CONFIG_ENABLED
+    xTaskCreate(uart_config_task, UART_CONFIG_TASK_NAME, UART_CONFIG_TASK_DEPTH, NULL, 3, NULL);
 #endif
 
 #if HOST_ENABLED
@@ -199,15 +136,19 @@ void app_main(void *p)
     xTaskCreate((void (*)(void *))gnss_init, "gnss", 1024, NULL, 3, NULL);
 #endif
 
+#if defined(DEBUG)
     while (1) {
         vTaskDelay(pdMS_TO_TICKS(3000));
         LOGD(TAG, "Free heap size: %d", xPortGetFreeHeapSize());
     }
-
-    // vTaskDelete(NULL);
+#else
+    vTaskDelete(NULL);
+#endif
 }
 
 void vApplicationStackOverflowHook(TaskHandle_t xTask,
                                    char *pcTaskName)
 {
+    LOGE(TAG, "Stack Overflow: %s", pcTaskName);
+    Error_Handler();
 }

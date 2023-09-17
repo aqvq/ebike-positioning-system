@@ -1,6 +1,6 @@
 #include "at24c64.h"
 #include "storage_iic.h"
-#include "error_type.h"
+#include "common/error_type.h"
 #include "utils/macros.h"
 #include "main.h"
 #define TAG "AT24C64"

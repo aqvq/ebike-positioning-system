@@ -1,6 +1,6 @@
 #include "gnss_settings.h"
 #include "log/log.h"
-#include "error_type.h"
+#include "common/error_type.h"
 #include "storage/storage.h"
 #include "cJSON.h"
 #include <string.h>

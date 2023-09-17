@@ -7,12 +7,12 @@
         "output-debug-info": "enable"
     },
     "c/cpp-compiler": {
-        "optimization": "level-image-size",
+        "optimization": "level-fast",
         "language-c": "c99",
         "language-cpp": "c++11",
-        "one-elf-section-per-function": true,
         "short-enums#wchar": true,
-        "warnings": "no-warnings"
+        "warnings": "no-warnings",
+        "one-elf-section-per-function": true
     },
     "asm-compiler": {
         "$use": "asm-auto",

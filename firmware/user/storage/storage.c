@@ -1,7 +1,7 @@
 
 #include <string.h>
 #include "storage.h"
-#include "error_type.h"
+#include "common/error_type.h"
 #include "log/log.h"
 #include "main/app_main.h"
 

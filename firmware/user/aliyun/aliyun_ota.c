@@ -21,8 +21,7 @@
 #include "upgrade/iap.h"
 #include "storage/storage.h"
 #include "upgrade/iap.h"
-#include "data/partition_info.h"
-#include "error_type.h"
+#include "common/error_type.h"
 #include "utils/macros.h"
 #include "bsp/mcu/mcu.h"
 #include "bsp/at/at.h"
@@ -30,22 +29,17 @@
 #include "bsp/mcu/mcu.h"
 #include "bsp/flash/boot.h"
 
-static const char *TAG = "ALIYUN_OTA";
+#define TAG  "ALIYUN_OTA"
 
 //--------------------------全局变量-----------------------------------
 // 关闭EC200模块并重启MCU, 定义在main中
 extern void ec800m_poweroff_and_mcu_restart(void);
 
-extern int g_major_version; /* 当前程序major版本 */
-extern int g_minor_version; /* 当前程序minor版本 */
-extern int g_patch_version; /* 当前程序patch版本 */
-
 /* OTA升级标志，定义在main.c中 */
 extern uint8_t g_app_upgrade_flag;
 extern void *mqtt_handle;
 // mqtt_download实例，不为NULL表示当前有OTA任务
-void *g_dl_handle        = NULL;
-uint8_t ota_success_flag = 0;
+void *g_dl_handle = NULL;
 
 static void *ota_handle               = NULL;
 static uint16_t ota_version_first_no  = 0;
@@ -129,10 +123,7 @@ static void user_ota_recv_handler(void *ota_handle, aiot_ota_recv_t *ota_msg, vo
 #endif
             // 开始OTA
             LOGD(TAG, "begin ota");
-            app_info_t config = {0};
-            read_app_current(&config);
-            assert(storage_check(&config) == OK);
-            err = iap_init((config.id == 1 ? 2 : 1));
+            err = iap_init();
             if (err != OK) {
                 LOGE(TAG, "ota_begin failed (%s)", error_string(err));
                 iap_deinit();
@@ -251,44 +242,16 @@ static void aliyun_ota_task(void *pvParameters)
                 LOGE(TAG, "ota_end failed (%s)!", error_string(err));
             } else {
                 /* 设置下次启动分区 */
-                app_info_t app_info = {0};
-                read_app_current(&app_info);
-                assert(storage_check(&app_info) == OK);
-                app_info.enabled       = APP_INFO_ENABLED_FLAG;
-                app_info.version_major = ota_version_first_no;
-                app_info.version_minor = ota_version_second_no;
-                app_info.version_patch = ota_version_third_no;
-                app_info.size          = ota_app_size;
-                app_info.timestamp     = get_timestamp();
-                if (app_info.id == 1) {
-                    app_info.id   = 2;
-                    app_info.addr = APP2_FLASH_ADDRESS;
-                } else if (app_info.id == 2) {
-                    app_info.id   = 1;
-                    app_info.addr = APP1_FLASH_ADDRESS;
-                } else {
-                    LOGE(TAG, "app_info.id error!");
-                }
-                strcpy(app_info.note, "aliyun ota");
-                err = iap_update_partition(&app_info);
-                if (err != OK) {
-                    LOGE(TAG, "iap_set_boot_partition failed!");
-                } else {
-                    /* 上报升级后的版本号 */
-                    char version[20] = {0};
-                    sprintf(version, "%d.%d.%d", ota_version_first_no, ota_version_second_no, ota_version_third_no);
-                    report_version(version);
-                    ota_success_flag = 1;
-                    LOGI(TAG, "Prepare to restart system!");
-                }
+                char version[20] = {0};
+                sprintf(version, "%d.%d.%d", ota_version_first_no, ota_version_second_no, ota_version_third_no);
+                report_version(version);
+                LOGI(TAG, "Prepare to restart system!");
+                boot_swap_bank(); // 立即重启
             }
-        } else // 可能是取消升级
-        {
+        } else {
+            // 可能是取消升级
             iap_deinit();
-            LOGW(TAG, "iap_deinit!!!");
-        }
-        if (ota_success_flag == 1) {
-            boot_swap_bank(); // 立即重启
+            LOGW(TAG, "iap_deinit");
         }
         ota_mcu_restart();
     }
@@ -323,7 +286,7 @@ int32_t aliyun_ota_init(void *mqtt_handle)
 
     /* 上报当前设备的版本号 */
     char cur_version[20] = {0};
-    sprintf(cur_version, "%d.%d.%d", g_major_version, g_minor_version, g_patch_version);
+    sprintf(cur_version, "%d.%d.%d", APP_VERSION_MAJOR, APP_VERSION_MINOR, APP_VERSION_BUILD);
     report_version(cur_version);
 
     return 0;

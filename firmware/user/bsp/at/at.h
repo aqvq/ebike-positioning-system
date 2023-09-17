@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "aiot_at_api.h"
-#include "error_type.h"
+#include "common/error_type.h"
 #include "log/log.h"
 #include "utils/linked_list.h"
 #include "aiot_state_api.h"

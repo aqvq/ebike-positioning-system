@@ -3,7 +3,7 @@
 #define __FLASH_H
 
 #include <stdint.h>
-#include "error_type.h"
+#include "common/error_type.h"
 
 uint32_t flash_get_alternate_bank_address(void);
 error_t flash_erase_alternate_bank(void);

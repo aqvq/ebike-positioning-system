@@ -17,7 +17,7 @@
 #include "protocol/host/host_message_handle.h"
 #include "gnss/gnss.h"
 
-static const char *TAG = "HOST_PROTOCOL";
+#define TAG  "HOST_PROTOCOL"
 
 /* OTA升级标志，定义在main.c中 */
 extern uint8_t g_app_upgrade_flag;

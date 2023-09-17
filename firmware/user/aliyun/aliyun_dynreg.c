@@ -12,10 +12,10 @@
 #include "storage/storage.h"
 #include "FreeRTOS.h"
 #include "data/device_info.h"
-#include "error_type.h"
+#include "common/error_type.h"
 #include "data/device_info.h"
 
-static const char *TAG = "DYN_REG";
+#define TAG  "DYN_REG"
 
 /* 如果要免预注册, 需要将该值设置为1; 如果需要在控制台预先注册设备, 置为0 */
 const uint8_t skip_pre_regist = 0;

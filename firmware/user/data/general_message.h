@@ -1,9 +1,3 @@
-/*
- * @Date: 2023-08-12 16:30:18
- * @LastEditors: ShangWentao shangwentao
- * @LastEditTime: 2023-08-31 16:22:29
- * @FilePath: \firmware\user\core\general_message.h
- */
 #ifndef _GENERAL_MESSAGE_H_
 #define _GENERAL_MESSAGE_H_
 

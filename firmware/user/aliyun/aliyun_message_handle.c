@@ -27,7 +27,7 @@ bool write_string(pb_ostream_t *stream, const pb_field_t *field, void *const *ar
 }
 #endif
 
-static const char *TAG = "ALIYUN_MESSAGE_HADLE";
+#define TAG  "ALIYUN_MESSAGE_HADLE"
 
 //--------------------------------------全局变量----------------------------------------------
 

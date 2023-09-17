@@ -8,30 +8,20 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "stream_buffer.h"
-#include "error_type.h"
+#include "common/error_type.h"
 #include "bsp/flash/flash.h"
 #include "log/log.h"
 #include "storage/storage.h"
 #include "iap.h"
-#include "data/partition_info.h"
 
-#define TAG                "UPGRADE"
-static uint32_t write_address   = 0;
+#define TAG "UPGRADE"
+static uint32_t write_address = 0;
 
-error_t iap_update_partition(app_info_t *new)
+error_t iap_init()
 {
-    error_t err    = OK;
-    app_info_t cur = {0};
-    err |= read_app_current(&cur);
-    err |= write_app_previous(&cur);
-    err |= write_app_current(new);
-    return err;
-}
-
-error_t iap_init(uint8_t id)
-{
-    write_address = flash_get_alternate_bank_address();
-    return iap_erase(id);
+    // write_address = ((boot_get_current_bank() == 0) ? APP2_FLASH_ADDRESS : APP1_FLASH_ADDRESS);
+    write_address = APP2_FLASH_ADDRESS;
+    return iap_erase();
 }
 
 error_t iap_deinit()
@@ -47,11 +37,17 @@ error_t iap_write(uint8_t *buffer, uint32_t length)
         LOGE(TAG, "IAP Not Init");
         return ERROR_IAP_NOT_INIT;
     }
+    if (buffer == NULL) {
+        return ERROR_NULL_POINTER;
+    }
+    if (length == 0) {
+        return ERROR_INVALID_PARAMETER;
+    }
     write_address = flash_write(write_address, buffer, length);
     return err;
 }
 
-error_t iap_erase(uint8_t id)
+error_t iap_erase()
 {
     return flash_erase_alternate_bank();
 }

@@ -1,9 +1,3 @@
-/*
- * @Date: 2023-08-31 15:54:24
- * @LastEditors: ShangWentao shangwentao
- * @LastEditTime: 2023-08-31 17:07:10
- * @FilePath: \firmware\user\core\general_message.c
- */
 #include "general_message.h"
 #include <string.h>
 #include <stdlib.h>

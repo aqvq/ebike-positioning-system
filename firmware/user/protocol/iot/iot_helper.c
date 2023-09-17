@@ -17,7 +17,7 @@ static iot_interface_t iot_interface =
         .iot_post_log   = aliyun_iot_post_log};
 
 static uint8_t is_connect_iot = 0;
-static const char *TAG        = "IOT_HELPER";
+#define TAG "IOT_HELPER"
 
 //----------------------全局变量--------------------------------------------
 

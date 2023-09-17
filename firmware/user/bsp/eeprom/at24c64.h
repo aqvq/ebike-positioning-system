@@ -2,7 +2,7 @@
 #ifndef INC_STORAGE_H_
 #define INC_STORAGE_H_
 
-#include "error_type.h"
+#include "common/error_type.h"
 
 #define STORAGE_DEVICE  (0xA0)
 

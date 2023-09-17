@@ -114,7 +114,6 @@
       "custom_dep": {
         "name": "default",
         "incList": [
-          "user/common",
           "user",
           "libraries/FreeRTOS/include",
           ".eide/deps",

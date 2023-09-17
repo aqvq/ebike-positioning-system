@@ -1,7 +1,7 @@
 
 #include "flash.h"
 #include "log/log.h"
-#include "error_type.h"
+#include "common/error_type.h"
 #include "boot.h"
 #include <string.h>
 
