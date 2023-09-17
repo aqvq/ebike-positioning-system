@@ -46,7 +46,8 @@
         "user/conn/[deprecated]hal_adapter.c",
         "user/protocol/aliyun/mqtt_conn.c",
         "libraries/FreeRTOS/portable/heap_5.c",
-        "user/bsp/at/at_tcp.c"
+        "user/bsp/at/at_tcp.c",
+        "user/bsp/at/utils.c"
       ],
       "toolchain": "AC6",
       "compileConfig": {

@@ -152,3 +152,9 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask,
     LOGE(TAG, "Stack Overflow: %s", pcTaskName);
     Error_Handler();
 }
+
+extern IWDG_HandleTypeDef hiwdg;
+void vApplicationIdleHook(void)
+{
+    HAL_IWDG_Refresh(&hiwdg);
+}
