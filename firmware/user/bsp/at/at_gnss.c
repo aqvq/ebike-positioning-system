@@ -32,60 +32,32 @@ static uint8_t gnss_state = 0;
  * @param rsp
  * @return at_rsp_result_t
  */
-static at_rsp_result_t gnss_rsp_handler(char *rsp)
+at_rsp_result_t gnss_rsp_handler(char *rsp)
 {
-#if 0
-    if (strstr(rsp, "QGPSLOC"))
-    {
-        gnss_response_t gnss_response;
-        sscanf((const char *)(rsp + strlen("+QGPSLOC: ")), "%10s,%fN/S,%fE/W,%f,%f,%d,%f,%f,%f,%6s,%d",
-            &gnss_response.utc, &gnss_response.latitude, &gnss_response.longitude, &gnss_response.hdop,
-            &gnss_response.altitude, &gnss_response.fix, &gnss_response.cog,
-            &gnss_response.spkm, &gnss_response.spkn, gnss_response.date, &gnss_response.nsat);
-
-        if (g_gnss_response_list == NULL)
-        {
-            g_gnss_response_list = linked_list_new();
-        }
-
-        if (g_gnss_response_list->len >= MAX_GNSS_CACHE_LEN)
-        {
-            linked_list_lpop(g_gnss_response_list);
-        }
-
-        linked_list_rpush(g_gnss_response_list, &gnss_response);
-        LOGI(TAG, "gnss list len: %d", g_gnss_response_list->len);
-
-        return AT_RSP_SUCCESS;
-    }
-    return AT_RSP_FAILED;
-#endif
     memset(gnss_string, 0, sizeof(gnss_string));
     if (rsp != NULL) {
-        if (!sscanf(rsp, "%*[\r\n]+QGPSLOC: %s\r\n", gnss_string)) {
-            // LOGE(TAG, "format error (%s)", rsp);
+        if (strstr(rsp, "+QGPSLOC:") == NULL) {
+            return AT_RSP_FAILED;
+        }
+        if (!sscanf(rsp, "%*[^+]%[^\r]", gnss_string)) {
+            LOGE(TAG, "format error (%s)", rsp);
             return AT_RSP_FAILED;
         }
         // LOGD(TAG, "gnss: %s", gnss_string);
     }
 
-    // char *strbeg = strstr(rsp, "+QGPSLOC:");
-    // if (strbeg != NULL) {
-    //     char *strend = strstr(strbeg, "\r\n");
-    //     if (strend != NULL) {
-    //         memcpy(gnss_string, strbeg, strend - strbeg);
-    //     }
-    // }
     return AT_RSP_SUCCESS;
 }
 
+/*
++QGPS: 1
+
+OK
+*/
 static at_rsp_result_t gnss_state_rsp_handler(char *rsp)
 {
-    // char *line = NULL;
-    // line       = strstr(rsp, "+QGPS");
-    // LOGD(TAG, "gnss_state_rsp_handler: %s", line);
     if (rsp != NULL) {
-        if (!sscanf(rsp, "%*[\r\n]+QGPS: %hhd\r\n", &gnss_state)) {
+        if (!sscanf(rsp, "%*s%hhd", &gnss_state)) {
             LOGE(TAG, "format error (%s)", rsp);
         }
     }

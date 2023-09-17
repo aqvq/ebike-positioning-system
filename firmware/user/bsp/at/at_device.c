@@ -28,22 +28,15 @@ int32_t ec800m_at_poweroff()
     return res;
 }
 
+/*
+861197068734963
+
+OK
+*/
 static at_rsp_handler_t ec800m_imei_rsp_handler(char *rsp)
 {
-    // char *line = rsp;
-    // uint16_t i = 0;
-    // LOGD(TAG, "imei: %s", rsp);
-    // if (line[0] == '\r' && line[1] == '\n') {
-    //     // 如果开头是空行
-    //     line += 2;
-    // }
-    // while (*line != '\0' && *line != '\r' && *line != '\n') {
-    //     imei_string[i++] = *line++;
-    // }
-    // imei_string[i] = '\0';
-
     if (rsp != NULL) {
-        if (!sscanf(rsp, "%*[\r\n]%s\r\n", imei_string)) {
+        if (!sscanf(rsp, "%*[^\n]\n%[^\r]", imei_string)) {
             LOGE(TAG, "format error (%s)", rsp);
         }
     }

@@ -56,15 +56,15 @@ int32_t ec800m_at_gnss_disable_autogps()
 
     return res;
 }
+/*
++QGPSCFG: "autogps",1
 
+OK
+*/
 static at_rsp_result_t gnss_autogps_state_rsp_handler(char *rsp)
 {
-    // char line[128] = {0};
-    // strcpy(line, rsp);
-    // // line       = strstr(rsp, "+QGPSCFG");
-    // LOGD(TAG, "%s", line);
     if (rsp != NULL) {
-        if (!sscanf(rsp, "%*[\r\n]+QGPSCFG: \"autogps\",%hhd\r\n", &gnss_autogps_state)) {
+        if (!sscanf(rsp, "%*[^,],%hhd", &gnss_autogps_state)) {
             LOGE(TAG, "format error (%s)", rsp);
             return AT_RSP_FAILED;
         }

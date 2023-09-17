@@ -35,21 +35,21 @@ uint8_t g_app_upgrade_flag = 0;
 void print_welcome_message(void)
 {
     LOG("*************************************************************");
-    LOG("*                                                           *");
-    LOG("*              THIS IS E-Bike Positioning Device            *");
-    LOG("*                SOFTWARE VERSION: %d.%d.%d                   *", APP_VERSION_MAJOR, APP_VERSION_MINOR, APP_VERSION_BUILD);
-    LOG("*                                                           *");
+    LOG("                                                           ");
+    LOG("              THIS IS E-Bike Positioning Device            ");
+    LOG("                SOFTWARE VERSION: %d.%d.%d                   ", APP_VERSION_MAJOR, APP_VERSION_MINOR, APP_VERSION_BUILD);
+    LOG("                                                           ");
 #if HOST_ENABLED
-    LOG("*                        HOST_ENABLED                       *");
+    LOG("                        HOST_ENABLED                       ");
 #endif
 #if MQTT_ENABLED
-    LOG("*                        MQTT_ENABLED                       *");
+    LOG("                        MQTT_ENABLED                       ");
 #endif
 #if UART_CONFIG_ENABLED
-    LOG("*                 UART_CONFIG_ENABLED               *");
+    LOG("                    UART_CONFIG_ENABLED               ");
 #endif
-    LOG("*                  Created By Shang Wentao                  *");
-    LOG("*                                                           *");
+    LOG("                  Created By Shang Wentao                  ");
+    LOG("                                                           ");
     LOG("*************************************************************");
 }
 

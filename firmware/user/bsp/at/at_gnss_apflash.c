@@ -57,13 +57,15 @@ int32_t ec800m_at_gnss_disable_apflash()
     return res;
 }
 
+/*
++QGPSCFG: "apflash",1
+
+OK
+*/
 static at_rsp_result_t gnss_apflash_state_rsp_handler(char *rsp)
 {
-    // char *line = NULL;
-    // line       = strstr(rsp, "+QGPSCFG");
-    // LOGD(TAG, "%s", rsp);
     if (rsp != NULL) {
-        if (!sscanf(rsp, "%*[\r\n]+QGPSCFG: \"apflash\",%hhd\r\n", &gnss_apflash_state)) {
+        if (!sscanf(rsp, "%*[^,],%hhd", &gnss_apflash_state)) {
             LOGE(TAG, "format error (%s)", rsp);
             return AT_RSP_FAILED;
         }

@@ -316,6 +316,7 @@ error_t parse_swapbank(const char *input, char *output)
 
 error_t parse_upgrade(const char *input, char *output)
 {
+    // 仅供测试
     LOGI(TAG, "Upgrade program, about to start from bootloader...");
     boot_jump_to_bootloader();
     // Will not be executed here

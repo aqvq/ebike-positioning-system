@@ -56,11 +56,11 @@
 #define PURPLE    ""
 #define L_PURPLE  ""
 #define CYAN      ""
-#define L_CYAN      ""
+#define L_CYAN    ""
 #define GRAY      ""
 #define L_GRAY    ""
 #define WHITE     ""
-#define L_WHITE     ""
+#define L_WHITE   ""
 
 #define BOLD      ""
 #define UNDERLINE ""
@@ -114,6 +114,8 @@
 
 #endif
 
+#ifdef DEBUG
+
 #ifdef LOG_OUPUT_DEBUG
 #define LOGD(TAG, FORMAT, ...) printf(GREEN "%010d [" L_GREEN "DEBUG" GREEN "] " UNDERLINE "%s:%d:%s" GREEN " - " FORMAT "\r\n" NONE, HAL_GetTick(), __FILE__, __LINE__, __func__, ##__VA_ARGS__)
 #else
@@ -124,6 +126,13 @@
 #define LOGT(TAG, FORMAT, ...) printf(BLUE "%010d [" L_BLUE "TRACE" BLUE "] " UNDERLINE "%s:%d:%s" BLUE " - " FORMAT "\r\n" NONE, HAL_GetTick(), __FILE__, __LINE__, __func__, ##__VA_ARGS__)
 #else
 #define LOGT(TAG, FORMAT, ...) ;
+#endif
+
+#else
+
+#define LOGD(TAG, FORMAT, ...) ;
+#define LOGT(TAG, FORMAT, ...) ;
+
 #endif
 
 #define LOG(FORMAT, ...) printf(NONE FORMAT "\r\n", ##__VA_ARGS__)
