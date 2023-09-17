@@ -1,5 +1,5 @@
 #include "at.h"
-#define TAG "AT_APFLASH"
+#define TAG "AT_GNSS_APFLASH"
 
 static uint8_t gnss_apflash_state;
 
@@ -59,12 +59,12 @@ int32_t ec800m_at_gnss_disable_apflash()
 
 static at_rsp_result_t gnss_apflash_state_rsp_handler(char *rsp)
 {
-    char *line = NULL;
-    line       = strstr(rsp, "+QGPSCFG");
-    LOGD(TAG, "%s", rsp);
-    if (line != NULL) {
-        if (!sscanf(line, "+QGPSCFG: \"apflash\",%d\r\n", &gnss_apflash_state)) {
-            LOGE(TAG, "format error (%s)", line);
+    // char *line = NULL;
+    // line       = strstr(rsp, "+QGPSCFG");
+    // LOGD(TAG, "%s", rsp);
+    if (rsp != NULL) {
+        if (!sscanf(rsp, "%*[\r\n]+QGPSCFG: \"apflash\",%hhd\r\n", &gnss_apflash_state)) {
+            LOGE(TAG, "format error (%s)", rsp);
             return AT_RSP_FAILED;
         }
     }

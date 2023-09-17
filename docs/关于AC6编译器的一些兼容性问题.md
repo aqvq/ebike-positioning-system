@@ -1,0 +1,1 @@
+- sscanf和printf等io输入输出函数在ac6和gcc中存在明显的差异，如在ac6中sscanf在输入uint8_t时要使用%hhd而不能使用%d，否则将在sscanf中出现hardfault问题。如果出现此类错误，请格外注意此类函数对数据类型的操作有无错误。

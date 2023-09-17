@@ -2,10 +2,10 @@
 #ifndef _APP_CONFIG_H_
 #define _APP_CONFIG_H_
 
-#define HOST_ENABLED                (0) // 串口发送数据给上位机
+#define HOST_ENABLED                (1) // 串口发送数据给上位机
 #define MQTT_ENABLED                (1) // 4G通讯功能使能
-#define GNSS_ENABLED                (0) // 采集GPS数据使能
-#define UART_GATEWAY_CONFIG_ENABLED (0) // 用于上位机配置网关参数功能
+#define GNSS_ENABLED                (1) // 采集GPS数据使能
+#define UART_GATEWAY_CONFIG_ENABLED (1) // 用于上位机配置网关参数功能
 
 //------------------------------------------------ 系统监控参数 --------------------------------------------------------------------------
 /* 所有模块重启的最小间隔时间，当GPS模块速度几乎为0时重启，单位：分钟 */

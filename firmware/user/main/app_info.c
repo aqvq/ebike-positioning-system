@@ -5,12 +5,14 @@
 #include "bsp/flash/boot.h"
 #include "bsp/mcu/mcu.h"
 #include "upgrade/iap.h"
+#include "bsp/flash/flash.h"
+#include <string.h>
 
 void print_app_info(app_info_t *app_info)
 {
     char date_time[32] = {0};
     printf("\r\npartition id:  %1d", app_info->id);
-    printf("\r\napp version:   v%d.%d.%d", app_info->version_minor, app_info->version_major, app_info->version_patch);
+    printf("\r\napp version:   v%d.%d.%d", app_info->version_major, app_info->version_minor, app_info->version_patch);
     printf("\r\napp size:      %dKB", app_info->size >> 10);
     printf("\r\nboot address:  0x%08X", app_info->addr);
     printf("\r\napp note:      \"%s\"", app_info->note);

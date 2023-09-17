@@ -1,12 +1,12 @@
 #include "at.h"
-#define TAG "AT_autogps"
+#define TAG "AT_GNSS_AUTOGPS"
 
 static uint8_t gnss_autogps_state;
 
 /**
  * @brief 启用/禁用 GNSS 自启动
  *
- * @return int32_t
+ * @return int32_t0
  */
 int32_t ec800m_at_gnss_enable_autogps()
 {
@@ -59,12 +59,13 @@ int32_t ec800m_at_gnss_disable_autogps()
 
 static at_rsp_result_t gnss_autogps_state_rsp_handler(char *rsp)
 {
-    char *line = NULL;
-    line       = strstr(rsp, "+QGPSCFG");
-    LOGD(TAG, "%s", rsp);
-    if (line != NULL) {
-        if (!sscanf(line, "+QGPSCFG: \"autogps\",%d\r\n", &gnss_autogps_state)) {
-            LOGE(TAG, "format error (%s)", line);
+    // char line[128] = {0};
+    // strcpy(line, rsp);
+    // // line       = strstr(rsp, "+QGPSCFG");
+    // LOGD(TAG, "%s", line);
+    if (rsp != NULL) {
+        if (!sscanf(rsp, "%*[\r\n]+QGPSCFG: \"autogps\",%hhd\r\n", &gnss_autogps_state)) {
+            LOGE(TAG, "format error (%s)", rsp);
             return AT_RSP_FAILED;
         }
     }

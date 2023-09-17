@@ -29,7 +29,7 @@ error_t flash_erase_alternate_bank(void)
     HAL_FLASH_Unlock();
     HAL_StatusTypeDef ret = HAL_FLASHEx_Erase(&flash_erase_init, &PageError);
     HAL_FLASH_Lock();
-    if (ret != HAL_OK || PageError != 0xFFFFFFFF) {
+    if (ret != HAL_OK) {
         return FLASH_ERASE_ERROR;
     }
     return OK;

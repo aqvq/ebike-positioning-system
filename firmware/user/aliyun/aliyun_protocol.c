@@ -282,7 +282,7 @@ static int32_t aliyun_mqtt_start(void **handle, char *product_key, char *device_
 
     /* 创建一个单独的线程, 专用于执行aiot_mqtt_process, 它会自动发送心跳保活, 以及重发QoS1的未应答报文*/
     g_mqtt_process_thread_running = 1;
-    if (xTaskCreate(aliyun_mqtt_process_thread, "aliyun_mqtt_process_thread", 5120, (void *)mqtt_handle, tskIDLE_PRIORITY, NULL) != pdPASS) {
+    if (xTaskCreate(aliyun_mqtt_process_thread, "aliyun_mqtt_process_thread", 1024, (void *)mqtt_handle, tskIDLE_PRIORITY, NULL) != pdPASS) {
         LOGE(TAG, "create aliyun_mqtt_process_thread failed");
         g_mqtt_process_thread_running = 0;
         aiot_mqtt_deinit(&mqtt_handle);
@@ -295,7 +295,7 @@ static int32_t aliyun_mqtt_start(void **handle, char *product_key, char *device_
 
     /* 当前任务会触发IDLE任务看门狗，暂时将优先级设置为0解决这个问题!!! */
     //
-    if (xTaskCreate(aliyun_mqtt_recv_thread, "aliyun_mqtt_recv_thread", 5120, (void *)mqtt_handle, tskIDLE_PRIORITY, NULL) != pdPASS) {
+    if (xTaskCreate(aliyun_mqtt_recv_thread, "aliyun_mqtt_recv_thread", 1024, (void *)mqtt_handle, tskIDLE_PRIORITY, NULL) != pdPASS) {
         LOGE(TAG, "create aliyun_mqtt_recv_thread failed");
         g_mqtt_recv_thread_running = 0;
         aiot_mqtt_deinit(&mqtt_handle);
@@ -443,13 +443,13 @@ int32_t aliyun_iot_connect(iot_receive_callback func)
     char *device_name = get_device_name();
     char *device_secret;
 
-    /* 硬件AT模组初始化 */
-    res = at_hal_init();
-    if (res < STATE_SUCCESS) {
-        LOGE(TAG, "aliyun protocol at_hal_init failed, restart");
-        ec800m_poweroff_and_mcu_restart();
-        return -1;
-    }
+    // /* 硬件AT模组初始化 */
+    // res = at_hal_init();
+    // if (res < STATE_SUCCESS) {
+    //     LOGE(TAG, "aliyun protocol at_hal_init failed, restart");
+    //     ec800m_poweroff_and_mcu_restart();
+    //     return -1;
+    // }
 
     /* 动态注册 */
     if (!is_registered()) {

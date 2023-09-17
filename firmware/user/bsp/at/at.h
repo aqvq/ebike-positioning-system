@@ -11,6 +11,7 @@
 #include "utils/macros.h"
 
 extern core_at_handle_t at_handle;
+int32_t core_at_commands_send_sync(const core_at_cmd_item_t *cmd_list, uint16_t cmd_num);
 
 // at device
 error_t ec800m_init();

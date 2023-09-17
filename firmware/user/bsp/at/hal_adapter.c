@@ -40,9 +40,6 @@ typedef struct {
 static uart_ring_buffer_t uart_dma_rx_buf = {0};
 
 /*=================uart recv start=====================================*/
-#define _uart_recv_complete_cb      HAL_UART_RxCpltCallback
-#define _uart_recv_half_complete_cb HAL_UART_RxHalfCpltCallback
-#define _uart1_irq_cb               USART1_IRQHandler
 
 /*recv data to at module*/
 static void _usart_recv_user(uint8_t *data, uint32_t size)
@@ -57,7 +54,7 @@ static void _usart_recv_user(uint8_t *data, uint32_t size)
 }
 
 /*uart recv callback*/
-static void _usart_recv_isr(UART_HandleTypeDef *huart)
+void _usart_recv_isr(UART_HandleTypeDef *huart)
 {
     uint32_t recv_len = 1;
 
@@ -76,29 +73,6 @@ static void _usart_recv_isr(UART_HandleTypeDef *huart)
             _usart_recv_user(&uart_dma_rx_buf.data[0], recv_len);
         }
     }
-}
-
-/*uart1 rx dma full complete interrupt callback*/
-void _uart_recv_complete_cb(UART_HandleTypeDef *huart)
-{
-    _usart_recv_isr(huart);
-}
-
-/*uart1 rx dma half complete interrupt callback*/
-void _uart_recv_half_complete_cb(UART_HandleTypeDef *huart)
-{
-    _usart_recv_isr(huart);
-}
-/*uart1 interrupt*/
-void _uart1_irq_cb(void)
-{
-    /*check and process idle interrupt*/
-    if ((__HAL_UART_GET_FLAG(&huart1, UART_FLAG_IDLE) != RESET)) {
-        __HAL_UART_CLEAR_IDLEFLAG(&huart1);
-        _usart_recv_isr(&huart1);
-    }
-
-    HAL_UART_IRQHandler(&huart1);
 }
 
 /*=================uart recv end=====================================*/
@@ -170,7 +144,7 @@ int32_t at_hal_init(void)
     /*初始化模组及获取到IP网络*/
     res = aiot_at_bootstrap();
     if (res < 0) {
-        printf("aiot_at_bootstrap failed\r\n");
+        printf("aiot_at_bootstrap failed (res: %d)\r\n", res);
         return -1;
     }
 

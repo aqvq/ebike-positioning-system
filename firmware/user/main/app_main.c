@@ -147,7 +147,7 @@ error_t storage_init()
     return err;
 }
 
-void app_main(void)
+void app_main(void *p)
 {
     int8_t err = 0;
     // 初始化mcu
@@ -167,26 +167,44 @@ void app_main(void)
     // 初始化设备
     ec800m_init();
 
+    LOGD(TAG, "Current Bank: %d", boot_get_current_bank());
+    boot_swap_bank();
+
 #if UART_GATEWAY_CONFIG_ENABLED
     xTaskCreate(uart_gateway_config_task, UART_GATEWAY_CONFIG_TASK_NAME, UART_GATEWAY_CONFIG_TASK_DEPTH, NULL, 3, NULL);
-#endif
-
-#if MQTT_ENABLED
-    // 初始化4G模块
-    // iot_connect();
-    xTaskCreate(iot_connect, "conn", 5120, NULL, 3, NULL);
-#endif
-
-#if GNSS_ENABLED
-    // gnss_init();
-    xTaskCreate(gnss_init, "gnss", 2048, NULL, 3, NULL);
 #endif
 
 #if HOST_ENABLED
     xTaskCreate(host_protocol_task, HOST_PROTOCOL_TASK_NAME, 512, NULL, 3, NULL);
 #endif
 
-    vTaskDelete(NULL);
+#if MQTT_ENABLED || GNSS_ENABLED
+    /* 硬件AT模组初始化 */
+    int32_t res = at_hal_init();
+    if (res < STATE_SUCCESS) {
+        LOGE(TAG, "aliyun protocol at_hal_init failed, restart");
+        ec800m_poweroff_and_mcu_restart();
+    }
+    LOGD(TAG, "at hal init success");
+#endif
+
+#if MQTT_ENABLED
+    // 初始化4G模块
+    // iot_connect();
+    xTaskCreate((void (*)(void *))iot_connect, "conn", 2048, NULL, 3, NULL);
+#endif
+
+#if GNSS_ENABLED
+    // gnss_init();
+    xTaskCreate((void (*)(void *))gnss_init, "gnss", 1024, NULL, 3, NULL);
+#endif
+
+    while (1) {
+        vTaskDelay(pdMS_TO_TICKS(3000));
+        LOGD(TAG, "Free heap size: %d", xPortGetFreeHeapSize());
+    }
+
+    // vTaskDelete(NULL);
 }
 
 void vApplicationStackOverflowHook(TaskHandle_t xTask,

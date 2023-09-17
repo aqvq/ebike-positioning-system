@@ -1,5 +1,7 @@
 #include "at.h"
 
+#define TAG "AT_DEVICE"
+
 // APN参数
 #define IMEI_STRING_LENGTH (20)
 static char imei_string[IMEI_STRING_LENGTH];
@@ -28,17 +30,24 @@ int32_t ec800m_at_poweroff()
 
 static at_rsp_handler_t ec800m_imei_rsp_handler(char *rsp)
 {
-    char *line = rsp;
-    uint16_t i = 0;
-    if (line[0] == '\r' && line[1] == '\n') {
-        // 如果开头是空行
-        line += 2;
-    }
-    while (*line != '\0' && *line != '\r' && *line != '\n') {
-        imei_string[i++] = *line++;
-    }
-    imei_string[i] = '\0';
+    // char *line = rsp;
+    // uint16_t i = 0;
+    // LOGD(TAG, "imei: %s", rsp);
+    // if (line[0] == '\r' && line[1] == '\n') {
+    //     // 如果开头是空行
+    //     line += 2;
+    // }
+    // while (*line != '\0' && *line != '\r' && *line != '\n') {
+    //     imei_string[i++] = *line++;
+    // }
+    // imei_string[i] = '\0';
 
+    if (rsp != NULL) {
+        if (!sscanf(rsp, "%*[\r\n]%s\r\n", imei_string)) {
+            LOGE(TAG, "format error (%s)", rsp);
+        }
+    }
+    // LOGD(TAG, "imei: %s", imei_string);
     return AT_RSP_SUCCESS;
 }
 
@@ -97,4 +106,3 @@ int32_t ec800m_state()
     res = core_at_commands_send_sync(state_cmd_table, array_size(state_cmd_table));
     return res;
 }
-

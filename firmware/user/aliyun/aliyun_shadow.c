@@ -368,7 +368,7 @@ void demo_shadow_recv_handler(void *handle, const aiot_shadow_recv_t *recv, void
                 // 上报云平台、不重启（防止通过串口等途径修改了参数，每次重启通知云平台）
                 update_shadow_restart_flag = 0;
 
-                if (xTaskCreate(update_shadow_task, "USP_TASK", 1024, NULL, 3, NULL) != pdPASS) {
+                if (xTaskCreate(update_shadow_task, "USP_TASK", 2048, NULL, 3, NULL) != pdPASS) {
                     LOGE(TAG, "create update_shadow_taskfailed !!!");
                 }
             }
@@ -394,7 +394,7 @@ void demo_shadow_recv_handler(void *handle, const aiot_shadow_recv_t *recv, void
                 // 上报云平台并重启（使参数生效）
                 update_shadow_restart_flag = 1;
 
-                if (xTaskCreate(update_shadow_task, "USP_TASK", 1024, NULL, tskIDLE_PRIORITY, NULL) != pdPASS) {
+                if (xTaskCreate(update_shadow_task, "USP_TASK", 2048, NULL, tskIDLE_PRIORITY, NULL) != pdPASS) {
                     LOGE(TAG, "create update_shadow_taskfailed !!!");
                 }
             } else {
@@ -425,7 +425,7 @@ void demo_shadow_recv_handler(void *handle, const aiot_shadow_recv_t *recv, void
                 update_shadow_restart_flag = 0;
             }
 
-            if (xTaskCreate(update_shadow_task, "USP_TASK", 1024, NULL, tskIDLE_PRIORITY, NULL) != pdPASS) {
+            if (xTaskCreate(update_shadow_task, "USP_TASK", 2048, NULL, tskIDLE_PRIORITY, NULL) != pdPASS) {
                 LOGE(TAG, "create update_shadow_taskfailed !!!");
             }
         }

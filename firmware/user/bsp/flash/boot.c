@@ -1,6 +1,7 @@
 #include "main.h"
 #include "boot.h"
 #include "log/log.h"
+#include "bsp/mcu/mcu.h"
 
 #define TAG "BOOT"
 
@@ -140,12 +141,6 @@ uint8_t boot_get_current_bank(void)
     return ((userconfig & FLASH_OPTR_nSWAP_BANK_Msk) == OB_USER_DUALBANK_SWAP_ENABLE);
 }
 
-#define ENABLE_INT()  __set_PRIMASK(0) /* 使能全局中断 */
-#define DISABLE_INT() __set_PRIMASK(1) /* 禁止全局中断 */
-
-void (*SysMemBootJump)(void);        /* 声明一个函数指针 */
-__IO uint32_t BootAddr = 0x1FFF0000; /* 系统BootLoader地址 */
-
 /************************************************************
  * @brief boot_jump_to_bootloader
  * 跳转到系统 BootLoader。
@@ -156,38 +151,6 @@ __IO uint32_t BootAddr = 0x1FFF0000; /* 系统BootLoader地址 */
  ************************************************************/
 void boot_jump_to_bootloader(void)
 {
-    uint32_t i = 0;
-
-    /* 关闭全局中断 */
-    DISABLE_INT();
-
-    /* 关闭滴答定时器，复位到默认值 */
-    SysTick->CTRL = 0;
-    SysTick->LOAD = 0;
-    SysTick->VAL  = 0;
-
-    /* 设置所有时钟到默认状态， 使用 HSI 时钟 */
-    HAL_RCC_DeInit();
-
-    /* 关闭所有中断，清除所有中断挂起标志 */
-    for (i = 0; i < 8; i++) {
-        NVIC->ICER[i] = 0xFFFFFFFF;
-        NVIC->ICPR[i] = 0xFFFFFFFF;
-    }
-
-    /* 使能全局中断 */
-    ENABLE_INT();
-
-    /* 跳转到系统 BootLoader，首地址是 MSP，地址+4 是复位中断服务程序地址 */
-    SysMemBootJump = (void (*)(void))(*((uint32_t *)(BootAddr + 4)));
-
-    /* 设置主堆栈指针 */
-    __set_MSP(*(uint32_t *)BootAddr);
-
-    /* 跳转到系统 BootLoader */
-    SysMemBootJump();
-
-    /* 跳转成功的话，不会执行到这里 */
-    LOGE(TAG, "jump to bootloader error");
-    Error_Handler();
+    LOGD(TAG, "boot from bootloader");
+    boot_configure_boot_from_bootloader();
 }

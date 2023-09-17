@@ -1,5 +1,7 @@
 #include "at.h"
 
+#define TAG "AT_GNSS_NEMA"
+
 extern at_rsp_result_t gnss_nmea_rsp_handler(char *rsp); // EDITED
 
 /**

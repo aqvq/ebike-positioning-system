@@ -33,7 +33,7 @@
 static const char *TAG = "ALIYUN_OTA";
 
 //--------------------------全局变量-----------------------------------
-// 关闭EC200模块并重启ESP32, 定义在main中
+// 关闭EC200模块并重启MCU, 定义在main中
 extern void ec800m_poweroff_and_mcu_restart(void);
 
 extern int g_major_version; /* 当前程序major版本 */
@@ -76,8 +76,9 @@ void user_download_recv_handler(void *handle, const aiot_mqtt_download_recv_t *p
 
     // 写数据
     data_buffer_len = packet->data.data_resp.data_size;
-
-    err = iap_write(packet->data.data_resp.data, data_buffer_len);
+    static uint8_t data_buffer[OTA_RECV_BUFFER_SIZE];
+    memcpy(data_buffer, packet->data.data_resp.data, data_buffer_len);
+    err = iap_write(data_buffer, data_buffer_len);
 
     if (err != OK) {
         iap_deinit();
@@ -111,7 +112,7 @@ static void user_ota_recv_handler(void *ota_handle, aiot_ota_recv_t *ota_msg, vo
             error_t err;
 
             // OTA版本号相关
-            sscanf(ota_msg->task_desc->version, "%d.%d.%d", &ota_version_first_no, &ota_version_second_no, &ota_version_third_no);
+            sscanf(ota_msg->task_desc->version, "%hd.%hd.%hd", &ota_version_first_no, &ota_version_second_no, &ota_version_third_no);
             ota_app_size = ota_msg->task_desc->size_total;
             LOGW(TAG, "==== OTA target firmware version: %d.%d.%d, size: %u Bytes ====\r\n", ota_version_first_no, ota_version_second_no, ota_version_third_no, ota_msg->task_desc->size_total);
 
@@ -133,7 +134,7 @@ static void user_ota_recv_handler(void *ota_handle, aiot_ota_recv_t *ota_msg, vo
             assert(storage_check(&config) == OK);
             err = iap_init((config.id == 1 ? 2 : 1));
             if (err != OK) {
-                LOGE(TAG, "esp_ota_begin failed (%s)", error_string(err));
+                LOGE(TAG, "ota_begin failed (%s)", error_string(err));
                 iap_deinit();
                 break;
             }
@@ -157,7 +158,7 @@ static void user_ota_recv_handler(void *ota_handle, aiot_ota_recv_t *ota_msg, vo
             }
 
             /* 设置下载一包的大小，对于资源受限设备可以调整该值大小 */
-            request_size = 1024 * 10; // 不知道为何，此处不设置request_size值，request_size会等于0.
+            request_size = OTA_RECV_BUFFER_SIZE; // 不知道为何，此处不设置request_size值，request_size会等于0.
             if (aiot_mqtt_download_setopt(md_handler, AIOT_MDOPT_DATA_REQUEST_SIZE, &request_size) < STATE_SUCCESS) {
                 LOGE(TAG, "AIOT_MDOPT_DATA_REQUEST_SIZE failed");
                 // 结束下载会话
@@ -189,7 +190,7 @@ static void user_ota_recv_handler(void *ota_handle, aiot_ota_recv_t *ota_msg, vo
             g_dl_handle = md_handler;
 
             // 创建任务
-            if (xTaskCreate(aliyun_ota_task, "aliyun_ota_task", 5120, NULL, 3, NULL) != pdPASS) {
+            if (xTaskCreate(aliyun_ota_task, "aliyun_ota_task", 1024, NULL, 3, NULL) != pdPASS) {
                 LOGE(TAG, "create aliyun_ota_task failed, ota cancel");
 
                 // 结束下载会话
@@ -247,7 +248,7 @@ static void aliyun_ota_task(void *pvParameters)
             error_t err;
             err = iap_deinit();
             if (OK != err) {
-                LOGE(TAG, "esp_ota_end failed (%s)!", error_string(err));
+                LOGE(TAG, "ota_end failed (%s)!", error_string(err));
             } else {
                 /* 设置下次启动分区 */
                 app_info_t app_info = {0};
@@ -287,8 +288,7 @@ static void aliyun_ota_task(void *pvParameters)
             LOGW(TAG, "iap_deinit!!!");
         }
         if (ota_success_flag == 1) {
-            ota_success_flag = 0;
-            boot_swap_bank();
+            boot_swap_bank(); // 立即重启
         }
         ota_mcu_restart();
     }

@@ -45,8 +45,7 @@ error_t parse_get_gateway_info(const char *input, char *output);
 error_t parse_set_gateway_config(const char *input, char *output);
 error_t parse_set_device_info(const char *input, char *output);
 error_t parse_restart(const char *input, char *output);
-error_t parse_switch(const char *input, char *output);
-error_t parse_rollback(const char *input, char *output);
+error_t parse_swapbank(const char *input, char *output);
 error_t parse_get_appinfo(const char *input, char *output);
 error_t parse_set_appinfo(const char *input, char *output);
 error_t parse_get_gnss_settings(const char *input, char *output);
@@ -64,8 +63,7 @@ static uart_cmd_t uart_cmd[] = {
     {.command_type = "SET", .data_type = "GNSS", .parse_function = &parse_set_gnss_settings},
     {.command_type = "GET", .data_type = "GATEWAYINFO", .parse_function = &parse_get_gateway_info},
     {.command_type = "RESTART", .data_type = "STRING", .parse_function = &parse_restart},
-    {.command_type = "SWITCH", .data_type = "STRING", .parse_function = &parse_switch},
-    {.command_type = "ROLLBACK", .data_type = "STRING", .parse_function = &parse_rollback},
+    {.command_type = "SWAPBANK", .data_type = "STRING", .parse_function = &parse_swapbank},
     {.command_type = "UPGRADE", .data_type = "STRING", .parse_function = &parse_upgrade},
     {0, 0, 0}, // TODO: 以0结尾的方式比较灵活，后续可以传入指针
 };
@@ -79,7 +77,23 @@ void uart_init()
         LOGE(TAG, "uart stream buffer created error");
         Error_Handler();
     }
-    HAL_UART_Receive_IT(&huart2, &uart_recv_data, 1);
+    if (HAL_OK != HAL_UART_Receive_IT(&huart2, &uart_recv_data, 1)) {
+        LOGE(TAG, "uart receive interrupt error");
+        Error_Handler();
+    }
+}
+
+void _usart_config_recv_isr(UART_HandleTypeDef *huart)
+{
+    if (huart == &huart2) {
+        if (uart_stream_buffer) {
+            xStreamBufferSendFromISR(uart_stream_buffer, &uart_recv_data, 1, NULL);
+        }
+        if (HAL_OK != HAL_UART_Receive_IT(&huart2, &uart_recv_data, 1)) {
+            LOGE(TAG, "uart receive interrupt error");
+            Error_Handler();
+        }
+    }
 }
 
 static int8_t to_pc_data_print(const to_pc_data_t *data, char *output, uint16_t *output_len)
@@ -160,7 +174,7 @@ void uart_gateway_config_task(void *pvParameters)
                 Error_Handler();
             }
             if (xStreamBufferReceive(uart_stream_buffer, &data[i], 1, portMAX_DELAY) == 0) {
-                LOGW(TAG, "ble stream buffer is empty or error!");
+                LOGW(TAG, "uart stream buffer is empty or error!");
             }
         } while (data[i++] != '\n'); // 接收一行数据
         data[i] = '\0';
@@ -313,40 +327,10 @@ error_t parse_set_gateway_config(const char *input, char *output)
     }
 }
 
-error_t parse_switch(const char *input, char *output)
+error_t parse_swapbank(const char *input, char *output)
 {
-    // 该程序仅供测试
-    app_partition_t partition = {0};
-    read_partition_info(&partition);
-    app_info_t temp;
-    memcpy(&temp, &partition.app_current, sizeof(app_info_t));
-    memcpy(&partition.app_current, &partition.app_previous, sizeof(app_info_t));
-    memcpy(&partition.app_previous, &temp, sizeof(app_info_t));
-    write_partition_info(&partition);
-    strcpy(output, "");
-    flag_restart = 1;
-    boot_swap_bank(); // TODO: 会立即重启吗
-    return 0;
-}
-
-error_t parse_rollback(const char *input, char *output)
-{
-    app_info_t app = {0};
-    read_app_previous(&app);
-
-    if (app.enabled == APP_INFO_ENABLED_FLAG) // id正确
-    {
-        write_app_current(&app);
-        app.enabled = 0;
-        write_app_previous(&app);
-        strcpy(output, "");
-        flag_restart = 1;
-        boot_swap_bank(); // TODO: 会立即重启吗
-        return 0;
-    } else {
-        strcpy(output, "rollback failed");
-        return -1;
-    }
+    // 仅供测试
+    boot_swap_bank(); // 会立即重启
     return 0;
 }
 

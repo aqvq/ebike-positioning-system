@@ -1,5 +1,7 @@
 #include "at.h"
 
+#define TAG "AT_GNSS"
+
 /* GPS定位信息字符串长度 */
 #define GNSS_STRING_LEN (128)
 
@@ -58,22 +60,33 @@ static at_rsp_result_t gnss_rsp_handler(char *rsp)
     }
     return AT_RSP_FAILED;
 #endif
+    memset(gnss_string, 0, sizeof(gnss_string));
+    if (rsp != NULL) {
+        if (!sscanf(rsp, "%*[\r\n]+QGPSLOC: %s\r\n", gnss_string)) {
+            // LOGE(TAG, "format error (%s)", rsp);
+            return AT_RSP_FAILED;
+        }
+        // LOGD(TAG, "gnss: %s", gnss_string);
+    }
 
-    // LOGI(TAG, "gnss_string len=%d", strlen(rsp));
-
-    memset(gnss_string, 0, GNSS_STRING_LEN);
-    memcpy(gnss_string, rsp, strlen(rsp));
+    // char *strbeg = strstr(rsp, "+QGPSLOC:");
+    // if (strbeg != NULL) {
+    //     char *strend = strstr(strbeg, "\r\n");
+    //     if (strend != NULL) {
+    //         memcpy(gnss_string, strbeg, strend - strbeg);
+    //     }
+    // }
     return AT_RSP_SUCCESS;
 }
 
 static at_rsp_result_t gnss_state_rsp_handler(char *rsp)
 {
-    char *line = NULL;
-    line       = strstr(rsp, "+QGPS");
-
-    if (line != NULL) {
-        if (!sscanf(line, "+QGPS: %d\r\n", &gnss_state)) {
-            LOGE(TAG, "format error (%s)", line);
+    // char *line = NULL;
+    // line       = strstr(rsp, "+QGPS");
+    // LOGD(TAG, "gnss_state_rsp_handler: %s", line);
+    if (rsp != NULL) {
+        if (!sscanf(rsp, "%*[\r\n]+QGPS: %hhd\r\n", &gnss_state)) {
+            LOGE(TAG, "format error (%s)", rsp);
         }
     }
 
@@ -240,5 +253,3 @@ int32_t ec800m_at_gnss_config(uint8_t mode)
 
     return res;
 }
-
-

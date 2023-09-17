@@ -26,11 +26,11 @@
 extern aiot_os_al_t  *os_api;
 extern const char *ali_ca_cert;
 
-core_at_handle_t at_handle = {
+volatile core_at_handle_t at_handle = {
     .is_init = 0,
 };
 
-static at_rsp_result_t at_csq_handler(char *rsp)
+at_rsp_result_t at_csq_handler(char *rsp)
 {
     at_rsp_result_t res = AT_RSP_WAITING;
     int rssi = 0, ber = 0;

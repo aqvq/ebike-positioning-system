@@ -3,6 +3,7 @@
 #include "error_type.h"
 #include "storage/storage.h"
 #include "cJSON.h"
+#include <string.h>
 
 error_t read_gnss_settings(gnss_settings_t *config)
 {
@@ -54,10 +55,10 @@ error_t gnss_settings_parse(char *input, gnss_settings_t *config)
 error_t gnss_settings_print(gnss_settings_t *config, char *output, uint16_t *output_len)
 {
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddStringToObject(root, "gnss_upload_strategy", config->gnss_upload_strategy);
-    cJSON_AddStringToObject(root, "gnss_offline_strategy", config->gnss_offline_strategy);
-    cJSON_AddStringToObject(root, "gnss_ins_strategy", config->gnss_ins_strategy);
-    cJSON_AddStringToObject(root, "gnss_mode", config->gnss_mode);
+    cJSON_AddNumberToObject(root, "gnss_upload_strategy", config->gnss_upload_strategy);
+    cJSON_AddNumberToObject(root, "gnss_offline_strategy", config->gnss_offline_strategy);
+    cJSON_AddNumberToObject(root, "gnss_ins_strategy", config->gnss_ins_strategy);
+    cJSON_AddNumberToObject(root, "gnss_mode", config->gnss_mode);
 
     char *json_string      = cJSON_PrintUnformatted(root);
     size_t json_string_len = strlen(json_string);

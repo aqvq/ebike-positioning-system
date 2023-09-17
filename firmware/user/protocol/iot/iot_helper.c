@@ -69,6 +69,8 @@ void iot_send_task(void *pvParameters)
 
 int32_t iot_connect(void)
 {
+    // while (at_handle.is_init != 1)
+    //     vTaskDelay(pdMS_TO_TICKS(100));
     int32_t res = iot_interface.iot_connect(received_from_iot);
     if (res >= 0) {
         is_connect_iot = 1;

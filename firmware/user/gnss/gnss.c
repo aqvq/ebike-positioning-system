@@ -597,11 +597,14 @@ void gnss_task(void *pvParameters)
 
 #if GPS_DATA_TYPE == GPS_DATA
         // 老的接口
-        ec800m_at_gnss_location();
+        if (ec800m_at_gnss_location() != STATE_SUCCESS) {
+            LOGD(TAG, "ec800m_at_gnss_location failed");
+            continue;
+        }
 
         // +QGPSLOC: 074839.000,3145.8432N,11716.0268E,1.1,76.3,3,000.00,0.0,0.0,121222,20
         // +QGPSLOC: 094614.000,3145.8370N,11716.0300E,1.4,91.0,3,000.00,0.0,0.0,200223,20
-        if (!strstr(gnss_string, "ERROR")) {
+        if (gnss_string[0] != '\0' && !strstr(gnss_string, "ERROR")) {
             gnss_data_t data;
             data.spkm = 1000;
 
@@ -640,7 +643,7 @@ void gnss_task(void *pvParameters)
             {
                 // 向订阅的任务推送数据
                 general_message_to_queue();
-
+                // LOGD(TAG, "gnss data: %s", gnss_string);
                 // LOGI(TAG, "send gps %d", count);
             }
 
@@ -698,17 +701,22 @@ void gnss_task(void *pvParameters)
 
 void gnss_init(void)
 {
-    uint8_t retry          = GNSS_MAX_RETRY;
+    // while (at_handle.is_init != 1)
+    //     vTaskDelay(pdMS_TO_TICKS(100));
+
+    uint8_t retry = GNSS_MAX_RETRY;
 
     gnss_settings_t config = {0};
     error_t err            = read_gnss_settings(&config);
     if (err != OK) {
         LOGE(TAG, "read gnss settings error");
         return;
+    } else {
+        LOGI(TAG, "read gnss settings success");
     }
 
     do {
-        uint8_t gnss_state;
+        static uint8_t gnss_state;
         int32_t res = STATE_SUCCESS;
         // res         = ec800m_at_gnss_close();
         // if (res >= 0) {
@@ -723,28 +731,32 @@ void gnss_init(void)
         } else {
             if (config.gnss_mode & GNSS_AGPS_MSK != 0) {
                 // 打开AGPS，重启生效
-                uint8_t agps_state = 0;
-                res                = ec800m_at_gnss_agps_state(&agps_state);
+                static uint8_t agps_state = 0;
+                res                       = ec800m_at_gnss_agps_state(&agps_state);
                 if (res == STATE_SUCCESS && agps_state == 0) {
                     // AGPS处于关闭状态
                     res = ec800m_at_gnss_enable_agps();
                     if (res < 0) {
                         LOGE(TAG, "open agps failed, error code: %d", res);
-                        vTaskDelay(pdMS_TO_TICKS(1000 / portTICK_RATE_MS));
+                        vTaskDelay(pdMS_TO_TICKS(1000));
                         continue;
+                    } else {
+                        LOGI(TAG, "open agps success.");
                     }
                 }
             }
             if (config.gnss_mode & GNSS_AUTOGPS_MSK != 0) {
                 // 打开autogps，重启生效
-                uint8_t autogps_state = 0;
-                res                   = ec800m_at_gnss_autogps_state(&autogps_state);
+                static uint8_t autogps_state = 0;
+                res                          = ec800m_at_gnss_autogps_state(&autogps_state);
                 if (res == STATE_SUCCESS && autogps_state == 0) {
                     res = ec800m_at_gnss_enable_autogps();
                     if (res < 0) {
                         LOGE(TAG, "open autogps failed, error code: %d", res);
-                        vTaskDelay(pdMS_TO_TICKS(1000 / portTICK_RATE_MS));
+                        vTaskDelay(pdMS_TO_TICKS(1000));
                         continue;
+                    } else {
+                        LOGI(TAG, "open autogps success");
                     }
                 }
             }
@@ -753,20 +765,25 @@ void gnss_init(void)
             res = ec800m_at_gnss_open();
             if (res < 0) {
                 LOGE(TAG, "open gnss failed, error code: %d", res);
+                vTaskDelay(pdMS_TO_TICKS(3000));
                 continue;
+            } else {
+                LOGI(TAG, "open gnss success");
             }
         }
 
         if (config.gnss_mode & GNSS_APFLASH_MSK != 0) {
             // 打开APFLASH，立即生效
-            uint8_t apflash_state = 0;
-            res                   = ec800m_at_gnss_apflash_state(&apflash_state);
+            static uint8_t apflash_state = 0;
+            res                          = ec800m_at_gnss_apflash_state(&apflash_state);
             if (res == STATE_SUCCESS && apflash_state == 0) {
                 res = ec800m_at_gnss_enable_apflash();
                 if (res < 0) {
                     LOGE(TAG, "open apflash failed, error code: %d", res);
-                    vTaskDelay(pdMS_TO_TICKS(1000 / portTICK_RATE_MS));
+                    vTaskDelay(pdMS_TO_TICKS(1000));
                     continue;
+                } else {
+                    LOGI(TAG, "open apflash success");
                 }
             }
         }
@@ -777,14 +794,16 @@ void gnss_init(void)
         if (res < 0) {
             LOGE(TAG, "config gnss failed, error code: %d", res);
             continue;
+        } else {
+            LOGI(TAG, "config gnss success");
         }
 
         TaskHandle_t xHandle;
         if (xTaskCreate(gnss_task, GNSS_TASK_NAME, GNSS_TASK_STACK_SIZE, NULL, GNSS_TASK_PRIORITY, &xHandle) != pdPASS) {
-            LOGE(TAG, "create gnss task failed !!!");
+            LOGE(TAG, "create gnss task failed");
             break;
         } else {
-            LOGI(TAG, "create gnss task success !!!");
+            LOGI(TAG, "create gnss task success");
             break;
         }
 

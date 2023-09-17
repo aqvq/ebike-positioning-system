@@ -68,7 +68,7 @@ int32_t aliyun_ntp_init(void **handle)
      * TODO: 若是其它时区, 可做相应调整, 如西3区则把8改为-3, time_zone的合理取值是-12到+12的整数
      *
      */
-    int8_t time_zone = 0;
+    int8_t time_zone = 8;
 
     /* 创建1个ntp客户端实例并内部初始化默认参数 */
     ntp_handle = aiot_ntp_init();

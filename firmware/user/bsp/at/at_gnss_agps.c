@@ -1,16 +1,18 @@
 #include "at.h"
 
+#define TAG "AT_GNSS_AGPS"
+
 /* GNSS AGPS状态: 1-打开 0-关闭 */
 static uint8_t gnss_agps_state = 0;
 
 static at_rsp_result_t gnss_agps_state_rsp_handler(char *rsp)
 {
-    char *line = NULL;
-    line       = strstr(rsp, "+QAGPS");
-    LOGD(TAG, "%s", rsp);
-    if (line != NULL) {
-        if (!sscanf(line, "+QAGPS: %d\r\n", &gnss_agps_state)) {
-            LOGE(TAG, "format error (%s)", line);
+    // char *line = NULL;
+    // line       = strstr(rsp, "+QAGPS");
+    // LOGD(TAG, "%s", rsp);
+    if (rsp != NULL) {
+        if (!sscanf(rsp, "%*[\r\n]+QAGPS: %hhd\r\n", &gnss_agps_state)) {
+            LOGE(TAG, "format error (%s)", rsp);
         }
     }
 

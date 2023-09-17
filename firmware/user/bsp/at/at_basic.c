@@ -8,6 +8,53 @@ void _scanf_mbtowc()
     ;
 }
 
+extern at_rsp_result_t at_csq_handler(char *rsp);
+
+/*模组初始化命令集*/
+static core_at_cmd_item_t at_module_init_cmd_table[] = {
+    {
+        /* UART通道测试 */
+        .cmd = "AT\r\n",
+        .rsp = "OK",
+    },
+    {
+        /* 关闭回显 */
+        .cmd = "ATE0\r\n",
+        .rsp = "OK",
+    },
+    {
+        /* 获取模组型号 */
+        .cmd = "ATI\r\n",
+        .rsp = "OK",
+    },
+    {
+        /* 获取通信模块 IMEI 号 */
+        .cmd = "AT+CGSN\r\n",
+        .rsp = "OK",
+    },
+    {
+        /* 获取模组固件版本号 */
+        .cmd = "AT+CGMR\r\n",
+        .rsp = "OK",
+    },
+    {
+        /* 检查SIM卡 */
+        .cmd = "AT+CPIN?\r\n",
+        .rsp = "OK",
+    },
+    {
+        /* 获取SIM卡IMSI */
+        .cmd = "AT+CIMI\r\n",
+        .rsp = "OK",
+    },
+    {
+        /* 检查信号强度 */
+        .cmd     = "AT+CSQ\r\n",
+        .rsp     = "OK",
+        .handler = at_csq_handler,
+    },
+};
+
 /* 模块初始化命令表 */
 static core_at_cmd_item_t at_ip_init_cmd_table[] = {
     {
@@ -68,6 +115,9 @@ static core_at_recv_data_prefix at_recv = {
 };
 
 at_device_t ec800m_at_cmd = {
+    .module_init_cmd      = at_module_init_cmd_table,
+    .module_init_cmd_size = sizeof(at_module_init_cmd_table) / sizeof(core_at_cmd_item_t),
+
     .ip_init_cmd      = at_ip_init_cmd_table,
     .ip_init_cmd_size = sizeof(at_ip_init_cmd_table) / sizeof(core_at_cmd_item_t),
 

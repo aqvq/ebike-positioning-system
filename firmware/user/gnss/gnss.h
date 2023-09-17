@@ -20,7 +20,7 @@
 #define GNSS_AUTOGPS_MSK     (1 << 2) ///< 是否开启autogps
 #define GNSS_MODE_CONFIG_MSK (7 << 3) ///< GPS模式配置
 
-#define GNSS_MAX_RETRY       (5)
+#define GNSS_MAX_RETRY       (10)
 
 /// @brief GNSS初始化
 /// @param
@@ -47,7 +47,5 @@ typedef struct gnss_nmea_data {
     struct minmea_sentence_rmc rmc_frame;
     struct minmea_sentence_vtg vtg_frame;
 } gnss_nmea_data_t;
-
-void gnss_init(void);
 
 #endif // _GNSS_H_
