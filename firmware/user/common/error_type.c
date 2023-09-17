@@ -1,9 +1,3 @@
-/*
- * @Date: 2023-08-31 15:54:24
- * @LastEditors: ShangWentao shangwentao
- * @LastEditTime: 2023-08-31 17:06:48
- * @FilePath: \firmware\user\common\error_type.c
- */
 
 #include "common/error_type.h"
 

@@ -1,9 +1,3 @@
-/*
- * @Date: 2023-08-31 15:54:25
- * @LastEditors: ShangWentao shangwentao
- * @LastEditTime: 2023-08-31 17:11:42
- * @FilePath: \firmware\user\storage\storage.h
- */
 #ifndef __STORAGE_H
 #define __STORAGE_H
 

@@ -1,9 +1,3 @@
-/*
- * @Date: 2023-08-31 15:54:25
- * @LastEditors: ShangWentao shangwentao
- * @LastEditTime: 2023-08-31 17:37:31
- * @FilePath: \firmware\user\protocol\aliyun\aliyun_protocol.c
- */
 
 #include <stdio.h>
 #include <string.h>

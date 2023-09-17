@@ -1,9 +1,3 @@
-/*
- * @Date: 2023-08-31 15:54:25
- * @LastEditors: ShangWentao shangwentao
- * @LastEditTime: 2023-08-31 17:11:29
- * @FilePath: \firmware\user\storage\device\storage_iic.c
- */
 #include "storage_iic.h"
 
 static void IIC_W_SCL(uint8_t BitValue)

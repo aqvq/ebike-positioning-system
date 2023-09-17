@@ -1,9 +1,3 @@
-/*
- * @Date: 2023-08-31 15:54:25
- * @LastEditors: ShangWentao shangwentao
- * @LastEditTime: 2023-08-31 17:11:17
- * @FilePath: \firmware\user\protocol\uart\uart_config.c
- */
 #include "uart_config.h"
 #include "log/log.h"
 #include "string.h"
@@ -292,7 +286,7 @@ error_t parse_get_gnss_settings(const char *input, char *output)
 
 error_t parse_set_gnss_settings(const char *input, char *output)
 {
-    printf("valuestring=%s\r\n", input);
+    // printf("valuestring=%s\r\n", input);
 
     // 写FLASH
     int8_t res = write_gnss_settings_text(input);
@@ -301,7 +295,7 @@ error_t parse_set_gnss_settings(const char *input, char *output)
         return 0;
     } else {
         strcpy(output, "write gnss settings failed");
-        printf("error: %d\n", res);
+        // printf("error: %d\n", res);
         return -1;
     }
     return 0;

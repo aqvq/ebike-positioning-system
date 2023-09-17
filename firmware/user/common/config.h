@@ -21,8 +21,8 @@ typedef uint8_t bool;
 #define RAM                  __attribute__((section(".ram")))
 
 #define APP_VERSION_MAJOR    (1)
-#define APP_VERSION_MINOR    (0)
-#define APP_VERSION_BUILD    (9)
+#define APP_VERSION_MINOR    (1)
+#define APP_VERSION_BUILD    (0)
 
 #define HOST_ENABLED         (1) // 串口发送数据给上位机
 #define MQTT_ENABLED         (1) // 4G通讯功能使能

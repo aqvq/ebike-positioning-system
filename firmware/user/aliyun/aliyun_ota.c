@@ -1,9 +1,3 @@
-/*
- * @Date: 2023-08-31 15:54:25
- * @LastEditors: ShangWentao shangwentao
- * @LastEditTime: 2023-08-31 17:09:36
- * @FilePath: \firmware\user\protocol\aliyun\aliyun_ota.c
- */
 
 #include "aiot_mqtt_api.h"
 #include "aiot_at_api.h"

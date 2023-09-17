@@ -1,10 +1,3 @@
-/*
- * @Date: 2023-08-12 16:30:18
- * @LastEditors: ShangWentao shangwentao
- * @LastEditTime: 2023-08-31 16:40:47
- * @FilePath: \firmware\user\protocol\host\host_protocol.c
- */
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

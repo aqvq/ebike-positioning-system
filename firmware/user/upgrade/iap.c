@@ -1,9 +1,3 @@
-/*
- * @Date: 2023-08-31 15:54:25
- * @LastEditors: ShangWentao shangwentao
- * @LastEditTime: 2023-08-31 17:44:38
- * @FilePath: \firmware\user\partition\iap.c
- */
 
 #include "FreeRTOS.h"
 #include "task.h"

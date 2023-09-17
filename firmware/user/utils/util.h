@@ -1,10 +1,3 @@
-/*
- * @Date: 2023-08-31 15:54:25
- * @LastEditors: ShangWentao shangwentao
- * @LastEditTime: 2023-08-31 17:12:41
- * @FilePath: \firmware\user\utils\util.h
- */
-
 #ifndef _UTIL_H_
 #define _UTIL_H_
 

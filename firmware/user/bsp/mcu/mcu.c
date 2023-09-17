@@ -2,6 +2,8 @@
 #include "mcu.h"
 #include "bsp/flash/boot.h"
 #include "log/log.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 #define TAG "MCU"
 
@@ -39,9 +41,10 @@ void delay_us(uint32_t xus)
  */
 void delay_ms(uint32_t xms)
 {
-    while (xms--) {
-        delay_us(1000);
-    }
+    vTaskDelay(xms / portTICK_PERIOD_MS); // 延时
+    // while (xms--) {
+    //     delay_us(1000);
+    // }
 }
 
 /**
@@ -51,9 +54,10 @@ void delay_ms(uint32_t xms)
  */
 void delay_s(uint32_t xs)
 {
-    while (xs--) {
-        delay_ms(1000);
-    }
+    vTaskDelay(xs * 1000 / portTICK_PERIOD_MS); // 延时
+    // while (xs--) {
+    //     delay_ms(1000);
+    // }
 }
 
 void ec800m_vbus_on(void)
