@@ -29,7 +29,7 @@
 #include "bsp/mcu/mcu.h"
 #include "bsp/flash/boot.h"
 
-#define TAG  "ALIYUN_OTA"
+#define TAG "ALIYUN_OTA"
 
 //--------------------------全局变量-----------------------------------
 // 关闭EC200模块并重启MCU, 定义在main中
@@ -59,20 +59,18 @@ static void report_version(char *version);
 /* TODO: 一般来说, 设备升级时, 会在这个回调中, 把下载到的数据写到Flash上 */
 void user_download_recv_handler(void *handle, const aiot_mqtt_download_recv_t *packet, void *userdata)
 {
-    LOGD(TAG, "ota_download_recv_handler");
-    uint32_t data_buffer_len = 0;
-    error_t err              = OK;
-
     /* 目前只支持 packet->type 为 AIOT_DLRECV_HTTPBODY 的情况 */
     if (!packet || AIOT_MDRECV_DATA_RESP != packet->type) {
         return;
     }
 
-    // 写数据
-    data_buffer_len = packet->data.data_resp.data_size;
-    static uint8_t data_buffer[OTA_RECV_BUFFER_SIZE];
+    LOGD(TAG, "ota_download_recv_handler");
+    uint32_t data_buffer_len = packet->data.data_resp.data_size;
+    error_t err              = OK;
+    uint8_t *data_buffer     = pvPortMalloc(data_buffer_len);
     memcpy(data_buffer, packet->data.data_resp.data, data_buffer_len);
     err = iap_write(data_buffer, data_buffer_len);
+    vPortFree(data_buffer);
 
     if (err != OK) {
         iap_deinit();

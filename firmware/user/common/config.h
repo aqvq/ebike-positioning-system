@@ -22,7 +22,7 @@ typedef uint8_t bool;
 
 #define APP_VERSION_MAJOR    (1)
 #define APP_VERSION_MINOR    (0)
-#define APP_VERSION_BUILD    (2)
+#define APP_VERSION_BUILD    (7)
 
 #define HOST_ENABLED         (1) // 串口发送数据给上位机
 #define MQTT_ENABLED         (1) // 4G通讯功能使能

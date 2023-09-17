@@ -38,7 +38,7 @@
                    e(ERROR_CJSON_PARSE),              \
                    e(EEPROM_CHECK_ERROR),             \
                    e(FLASH_SWITCH_BANK_ERROR),        \
-                   e(DATA_MODIFIED),\
+                   e(DATA_MODIFIED),                  \
                    e(ERROR_IAP_NOT_INIT)
 
 // 定义NULL

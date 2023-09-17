@@ -34,14 +34,8 @@ error_t iap_write(uint8_t *buffer, uint32_t length)
 {
     error_t err = OK;
     if (write_address == 0) {
-        LOGE(TAG, "IAP Not Init");
+        LOGE(TAG, "IAP not init or flash write failed");
         return ERROR_IAP_NOT_INIT;
-    }
-    if (buffer == NULL) {
-        return ERROR_NULL_POINTER;
-    }
-    if (length == 0) {
-        return ERROR_INVALID_PARAMETER;
     }
     write_address = flash_write(write_address, buffer, length);
     return err;

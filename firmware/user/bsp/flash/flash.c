@@ -49,28 +49,37 @@ uint32_t flash_get_alternate_bank_address(void)
 
 // buffer points to a double-words data
 // which means the length of buffer 8
-static void flash_write_dword(uint32_t addr, uint8_t *buffer)
+static error_t flash_write_dword(uint32_t addr, uint8_t *buffer)
 {
-    HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, addr, *(uint64_t *)buffer);
+    if (HAL_OK != HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, addr, *(uint64_t *)buffer)) {
+        return FLASH_WRITE_ERROR;
+    }
+    return OK;
 }
 
 // buffer points to a 64-words data
 // which means the length of buffer 256
-static void flash_write_fast(uint32_t addr, uint8_t *buffer)
+static error_t flash_write_fast(uint32_t addr, uint8_t *buffer)
 {
-    HAL_FLASH_Program(FLASH_TYPEPROGRAM_FAST, addr, (uint64_t)buffer);
+    if (HAL_OK != HAL_FLASH_Program(FLASH_TYPEPROGRAM_FAST, addr, (uint64_t)buffer)) {
+        return FLASH_WRITE_ERROR;
+    }
+    return OK;
 }
 
 uint32_t flash_write(uint32_t addr, uint8_t *buffer, uint32_t length)
 {
+    error_t err = OK;
+    HAL_FLASH_Unlock(); // 解锁
+
     while (length > 0) {
         if (length >= 256) {
-            flash_write_fast(addr, buffer);
+            err = flash_write_fast(addr, buffer);
             buffer += 256;
             addr += 256;
             length -= 256;
         } else if (length >= 8) {
-            flash_write_dword(addr, buffer);
+            err = flash_write_dword(addr, buffer);
             buffer += 8;
             addr += 8;
             length -= 8;
@@ -78,11 +87,17 @@ uint32_t flash_write(uint32_t addr, uint8_t *buffer, uint32_t length)
             LOGW(TAG, "Flash write address is not aligned with 64 bytes.");
             uint8_t data[8] = {0};
             memcpy(data, buffer, length);
-            flash_write_dword(addr, data);
+            err = flash_write_dword(addr, data);
             buffer += length;
             addr += length;
             length -= length;
         }
+        if (err != OK) {
+            addr = 0;
+            break;
+        }
     }
+
+    HAL_FLASH_Lock(); // 加锁
     return addr;
 }
