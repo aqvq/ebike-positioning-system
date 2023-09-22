@@ -1,3 +1,13 @@
+/*
+ * @Author: 橘崽崽啊 2505940811@qq.com
+ * @Date: 2023-09-21 12:21:15
+ * @LastEditors: 橘崽崽啊 2505940811@qq.com
+ * @LastEditTime: 2023-09-22 15:00:15
+ * @FilePath: \firmware\user\bsp\eeprom\storage_iic.h
+ * @Description: 软件iic实现头文件
+ * 
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved. 
+ */
 
 #ifndef __IIC_H
 #define __IIC_H

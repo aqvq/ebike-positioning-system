@@ -1,3 +1,13 @@
+/*
+ * @Author: 橘崽崽啊 2505940811@qq.com
+ * @Date: 2023-09-21 12:21:15
+ * @LastEditors: 橘崽崽啊 2505940811@qq.com
+ * @LastEditTime: 2023-09-22 14:58:48
+ * @FilePath: \firmware\user\bsp\at\at_tcp.c
+ * @Description: at tcp命令文件
+ * 
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved. 
+ */
 #include "at.h"
 
 #define TAG "AT_TCP"
@@ -56,11 +66,7 @@ static at_rsp_result_t context_state_rsp_handler(char *rsp)
     return AT_RSP_SUCCESS;
 }
 
-/**
- * @brief 场景是否打开
- *
- * @return int32_t < 0 场景关闭或者异常, >=0 场景打开
- */
+
 int32_t ec800m_at_context_state(uint8_t *id, uint8_t *state)
 {
 /* 查询场景激活的命令 */
@@ -138,11 +144,6 @@ static at_rsp_result_t tcp_state_rsp_handler(char *rsp)
     return AT_RSP_SUCCESS;
 }
 
-/**
- * @brief TCP是否打开
- *
- * @return int32_t < 0 TCP关闭或者异常, >=0 TCP打开
- */
 int32_t ec800m_at_tcp_state(uint8_t *id, uint8_t *state)
 {
 
@@ -169,9 +170,7 @@ int32_t ec800m_at_tcp_state(uint8_t *id, uint8_t *state)
     return res;
 }
 
-/// @brief 关闭TCP连接
-/// @param
-/// @return
+
 int32_t ec800m_at_tcp_close(void)
 {
     int32_t res = STATE_SUCCESS;

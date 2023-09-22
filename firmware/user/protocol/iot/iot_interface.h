@@ -1,3 +1,13 @@
+/*
+ * @Author: 橘崽崽啊 2505940811@qq.com
+ * @Date: 2023-09-21 12:21:15
+ * @LastEditors: 橘崽崽啊 2505940811@qq.com
+ * @LastEditTime: 2023-09-22 18:57:39
+ * @FilePath: \firmware\user\protocol\iot\iot_interface.h
+ * @Description: iot协议实现接口
+ * 
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved. 
+ */
 #ifndef _IOT_INTERFACE_H_
 #define _IOT_INTERFACE_H_
 

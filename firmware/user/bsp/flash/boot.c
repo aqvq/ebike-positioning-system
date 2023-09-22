@@ -1,3 +1,13 @@
+/*
+ * @Author: 橘崽崽啊 2505940811@qq.com
+ * @Date: 2023-09-21 12:21:15
+ * @LastEditors: 橘崽崽啊 2505940811@qq.com
+ * @LastEditTime: 2023-09-22 15:31:40
+ * @FilePath: \firmware\user\bsp\flash\boot.c
+ * @Description: 针对stm32 option byte读写的驱动代码
+ * 
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved. 
+ */
 #include "main.h"
 #include "boot.h"
 #include "log/log.h"

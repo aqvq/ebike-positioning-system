@@ -1,3 +1,13 @@
+/*
+ * @Author: 橘崽崽啊 2505940811@qq.com
+ * @Date: 2023-09-21 12:21:15
+ * @LastEditors: 橘崽崽啊 2505940811@qq.com
+ * @LastEditTime: 2023-09-22 14:42:37
+ * @FilePath: \firmware\user\bsp\at\at_device.c
+ * @Description: 设备相关的at控制命令
+ * 
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved. 
+ */
 #include "at.h"
 
 #define TAG "AT_DEVICE"
@@ -5,7 +15,7 @@
 // APN参数
 #define IMEI_STRING_LENGTH (20)
 static char imei_string[IMEI_STRING_LENGTH];
-
+// rsp handler声明
 static at_rsp_handler_t ec800m_imei_rsp_handler(char *rsp);
 
 int32_t ec800m_at_poweroff()
@@ -29,6 +39,7 @@ int32_t ec800m_at_poweroff()
 }
 
 /*
+正常情况下，收到的回复格式如下
 861197068734963
 
 OK
@@ -72,11 +83,6 @@ int32_t ec800m_at_imei(char *imei)
     return res;
 }
 
-/**
- * @brief 设备是否打开
- * @param state < 0 关闭或者异常, >=0 打开
- * @return int32_t
- */
 int32_t ec800m_state()
 {
 #define state_cmd "AT\r\n"

@@ -1,16 +1,35 @@
+/*
+ * @Author: 橘崽崽啊 2505940811@qq.com
+ * @Date: 2023-09-21 12:21:15
+ * @LastEditors: 橘崽崽啊 2505940811@qq.com
+ * @LastEditTime: 2023-09-22 16:33:39
+ * @FilePath: \firmware\user\log\log.h
+ * @Description: 日志打印功能实现
+ *
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved.
+ */
 #ifndef __LOGGER_H
 #define __LOGGER_H
 
 #include <stdio.h>
 #include "main.h"
 
-// 控制调试输出
+// ========== 控制调试输出 ==========
+
+// 是否输出ERROR
 #define LOG_OUPUT_ERROR
+// 是否输出WARN
 #define LOG_OUPUT_WARN
+// 是否输出INFO
 #define LOG_OUPUT_INFO
+// 是否输出DEBUG
 #define LOG_OUPUT_DEBUG
+// 是否输出TRACE
 #define LOG_OUPUT_TRACE
+// 是否打印彩色日志
 #define LOG_COLOR_ENABLE
+
+// ========== 颜色定义 ==========
 
 #ifdef LOG_COLOR_ENABLE
 #define NONE      "\e[0m"
@@ -71,6 +90,8 @@
 #define CLRLINE   ""
 
 #endif
+
+// ========== 日志打印函数定义 ==========
 
 #ifdef DEBUG
 

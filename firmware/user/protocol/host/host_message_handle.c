@@ -1,3 +1,13 @@
+/*
+ * @Author: 橘崽崽啊 2505940811@qq.com
+ * @Date: 2023-09-21 12:21:15
+ * @LastEditors: 橘崽崽啊 2505940811@qq.com
+ * @LastEditTime: 2023-09-22 18:45:20
+ * @FilePath: \firmware\user\protocol\host\host_message_handle.c
+ * @Description: 处理host接收到的消息
+ * 
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved. 
+ */
 
 #include <string.h>
 #include <stdio.h>
@@ -5,7 +15,6 @@
 #include "protocol/host/host_message_handle.h"
 #include "cJSON.h"
 #include "log/log.h"
-
 #include "minmea.h"
 #include "gnss/gnss.h"
 #include "utils/util.h"
@@ -30,11 +39,12 @@ int8_t handle_host_message(general_message_t *general_message)
     uint8_t json_string_len        = 0;
     int8_t res;
 
+    // 将通用消息转json字符串
     res = general_message_to_string(general_message, json_string, &json_string_len);
 
     if (res == 0) {
         if (strlen(json_string) > 0) {
-            // 打印字符串到串口
+            // 将数据发往上位机，这里选择直接打印字符串到串口
             LOG("%s", json_string);
             res = 0;
         } else {
@@ -45,6 +55,11 @@ int8_t handle_host_message(general_message_t *general_message)
     return res;
 }
 
+/// @brief 将通用消息转换为json字符串
+/// @param general_message 通用消息地址
+/// @param output 输出字符串缓冲区
+/// @param output_len json字符串长度，可为NULL
+/// @return int8_t
 static int8_t general_message_to_string(general_message_t *general_message, char *output, uint8_t *output_len)
 {
     if (general_message == NULL || general_message->data == NULL)
@@ -52,6 +67,7 @@ static int8_t general_message_to_string(general_message_t *general_message, char
 
     cJSON *root;
 
+    // 判断是gnss_data还是gnss_nema_data
     switch (general_message->type) {
         case GNSS_DATA:
             root = create_cjson_root_with_gnss_data(general_message->data);
@@ -64,12 +80,17 @@ static int8_t general_message_to_string(general_message_t *general_message, char
             break;
     }
 
+    // 将结构体转json字符串
     to_json_string(root, output, output_len);
 
     cJSON_Delete(root);
     return 0;
 }
 
+/// @brief 将cJSON数据结构转换成json字符串
+/// @param root cJSON数据结构
+/// @param output 输出字符串缓冲区
+/// @param output_len json字符串长度，可为NULL
 static void to_json_string(cJSON *root, char *output, uint8_t *output_len)
 {
     char *json_string      = cJSON_PrintUnformatted(root);
@@ -86,6 +107,7 @@ static void to_json_string(cJSON *root, char *output, uint8_t *output_len)
 }
 
 //----------------------------- GNSS NMEA DATA ------------------------------------------
+
 #if 0
 static cJSON *create_minmea_float_object(const struct minmea_float *f)
 {

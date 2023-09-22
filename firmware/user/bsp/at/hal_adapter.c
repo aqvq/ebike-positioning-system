@@ -1,3 +1,13 @@
+/*
+ * @Author: 橘崽崽啊 2505940811@qq.com
+ * @Date: 2023-09-21 12:21:15
+ * @LastEditors: 橘崽崽啊 2505940811@qq.com
+ * @LastEditTime: 2023-09-22 14:39:06
+ * @FilePath: \firmware\user\bsp\at\hal_adapter.c
+ * @Description: AT串口驱动文件
+ * 
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved. 
+ */
 #include "main.h"
 #include <stdio.h>
 #include "aiot_at_api.h"
@@ -6,7 +16,7 @@
 #include "bsp/at/at.h"
 #include "bsp/mcu/mcu.h"
 
-#define TAG "EC800M"
+#define TAG "AT_HAL"
 
 /*huart1 for at module*/
 extern UART_HandleTypeDef huart1;
@@ -154,10 +164,17 @@ int32_t at_hal_init(void)
 error_t ec800m_init()
 {
     LOGD(TAG, "device init");
+    // 开启ec800m模块电源
     ec800m_vbat_on();
+    // 开启有源天线电源
     ec800m_gnss_ant_on();
+    // 关闭usb_vbus电源（暂时用不到，默认关闭）
     ec800m_vbus_off();
+    // 等待电源稳定
     delay_ms(30);
+    // ec800m开机
     ec800m_on();
+    // v1.0.0中stm32未接入ec800m的status引脚，无法获知ec800m开关机状态
+    // 使用此方法强制每次启动时重启，保证开机后模块处于工作状态
     ec800m_reset();
 }

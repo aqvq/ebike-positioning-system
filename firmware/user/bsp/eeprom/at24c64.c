@@ -1,3 +1,13 @@
+/*
+ * @Author: 橘崽崽啊 2505940811@qq.com
+ * @Date: 2023-09-21 12:21:15
+ * @LastEditors: 橘崽崽啊 2505940811@qq.com
+ * @LastEditTime: 2023-09-22 15:05:43
+ * @FilePath: \firmware\user\bsp\eeprom\at24c64.c
+ * @Description: at24c64驱动代码
+ *
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved.
+ */
 #include "at24c64.h"
 #include "storage_iic.h"
 #include "common/error_type.h"
@@ -5,6 +15,7 @@
 #include "main.h"
 #define TAG "AT24C64"
 
+// 检查eeprom设备
 error_t eeprom_check(void)
 {
     storage_iic_start();
@@ -14,6 +25,7 @@ error_t eeprom_check(void)
     return ((ack == 0) ? OK : EEPROM_CHECK_ERROR); // normally should be OK
 }
 
+// eeprom写一个字节
 static void bsp_eeprom_write(uint16_t address, uint8_t data)
 {
     while (eeprom_check() != OK)
@@ -36,6 +48,8 @@ static void bsp_eeprom_write(uint16_t address, uint8_t data)
     if (res) printf("Error in Storage_Write\n");
     storage_iic_stop();
 }
+
+// eeprom读一个字节
 static uint8_t bsp_eeprom_read(uint16_t address)
 {
     while (eeprom_check() != OK)
@@ -63,6 +77,7 @@ static uint8_t bsp_eeprom_read(uint16_t address)
     return ret;
 }
 
+// eeprom写一页
 static void bsp_eeprom_write_page(uint16_t addr, uint8_t *data, uint8_t len)
 {
     if (len == 0 || len > 32) return;
@@ -88,6 +103,7 @@ static void bsp_eeprom_write_page(uint16_t addr, uint8_t *data, uint8_t len)
     storage_iic_stop();
 }
 
+// eeprom读一页
 static void bsp_eeprom_read_page(uint16_t addr, uint8_t *buffer, uint8_t len)
 {
     if (len == 0 || len > 32) return;
@@ -120,6 +136,7 @@ static void bsp_eeprom_read_page(uint16_t addr, uint8_t *buffer, uint8_t len)
     storage_iic_stop();
 }
 
+// eeprom写任意数量的数据
 error_t eeprom_write(uint16_t addr, uint8_t *buffer, uint16_t len)
 {
     uint16_t end_addr  = addr + len;
@@ -141,6 +158,7 @@ error_t eeprom_write(uint16_t addr, uint8_t *buffer, uint16_t len)
     return OK;
 }
 
+// eeprom读任意数量的数据
 error_t eeprom_read(uint16_t addr, uint8_t *buffer, uint16_t len)
 {
     uint16_t end_addr  = addr + len;

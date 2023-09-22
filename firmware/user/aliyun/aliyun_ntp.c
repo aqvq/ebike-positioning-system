@@ -1,3 +1,13 @@
+/*
+ * @Author: 橘崽崽啊 2505940811@qq.com
+ * @Date: 2023-09-21 12:21:15
+ * @LastEditors: 橘崽崽啊 2505940811@qq.com
+ * @LastEditTime: 2023-09-21 22:42:52
+ * @FilePath: \firmware\user\aliyun\aliyun_ntp.c
+ * @Description: 阿里云NTP服务
+ * 
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved. 
+ */
 
 
 #include "aliyun_ntp.h"
@@ -26,13 +36,13 @@ void demo_ntp_event_handler(void *handle, const aiot_ntp_event_t *event, void *u
     }
 }
 
-/* TODO: 数据处理回调, 当SDK从网络上收到ntp消息时被调用 */
+/* 数据处理回调, 当SDK从网络上收到ntp消息时被调用 */
 void demo_ntp_recv_handler(void *handle, const aiot_ntp_recv_t *packet, void *userdata)
 {
     switch (packet->type) {
-        /* TODO: 结构体 aiot_ntp_recv_t{} 中包含当前时区下, 年月日时分秒的数值, 可在这里把它们解析储存起来 */
+        /* 结构体 aiot_ntp_recv_t{} 中包含当前时区下, 年月日时分秒的数值 */
         case AIOT_NTPRECV_LOCAL_TIME: {
-            LOGW(TAG, "local time: %llu, %02d/%02d/%02d-%02d:%02d:%02d:%d\n",
+            LOGI(TAG, "local time: %llu, %02d/%02d/%02d-%02d:%02d:%02d:%d\n",
                  (long long unsigned int)packet->data.local_time.timestamp,
                  packet->data.local_time.year,
                  packet->data.local_time.mon,

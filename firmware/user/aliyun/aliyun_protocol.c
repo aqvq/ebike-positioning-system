@@ -1,7 +1,17 @@
+/*
+ * @Author: 橘崽崽啊 2505940811@qq.com
+ * @Date: 2023-09-21 12:21:15
+ * @LastEditors: 橘崽崽啊 2505940811@qq.com
+ * @LastEditTime: 2023-09-21 22:54:49
+ * @FilePath: \firmware\user\aliyun\aliyun_protocol.c
+ * @Description: 本文件负责处理阿里云的所有功能与服务
+ * 
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved. 
+ */
+
 
 #include <stdio.h>
 #include <string.h>
-
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
@@ -25,14 +35,13 @@
 #include "aliyun_message_handle.h"
 #include "aliyun_shadow.h"
 
+#define TAG "ALIYUN_PROTOCOL"
+
+// MQTT重新建立连接次数，超过次数则重启
 #define RETRY_COUNT (3)
 
 // 关闭EC200模块并重启ESP32, 定义在main中
 extern void ec800m_poweroff_and_mcu_restart(void);
-
-#define TAG  "ALIYUN_PROTOCOL"
-
-// extern int32_t at_hal_init(void);
 
 /* 位于portfiles/aiot_port文件夹下的系统适配函数集合 */
 extern aiot_sysdep_portfile_t g_aiot_sysdep_portfile;
@@ -40,30 +49,34 @@ extern aiot_sysdep_portfile_t g_aiot_sysdep_portfile;
 /* 位于external/ali_ca_cert.c中的服务器证书 */
 extern const char *ali_ca_cert;
 
+// mqtt process运行标志
 static uint8_t g_mqtt_process_thread_running = 0;
+
+// mqtt recv运行标志
 static uint8_t g_mqtt_recv_thread_running    = 0;
 
-/// @brief 回调函数指针
+// 回调函数指针
 static iot_receive_callback receive_callback = NULL;
 
-void *mqtt_handle           = NULL; // MQTT会话实例
-static void *logpost_handle = NULL; // 日志上传会话实例
+// MQTT会话实例
+void *mqtt_handle           = NULL; 
 
+// 日志上传会话实例
+static void *logpost_handle = NULL; 
+
+// logpost的系统日志开关
 static uint8_t sys_log_switch = 1;
 
+// 设备影子句柄
 void *g_shadow_handle = NULL;
 
 /* 日志回调函数, SDK的日志会从这里输出, 禁止在此函数中调用SDK API */
 static int32_t aliyun_state_logcb(int32_t code, char *message)
 {
-    //  LOGE(TAG, "%s", message);
-    // if (strstr(message, "pub") != NULL || strstr(message, "sub") != NULL)
-    // {
-    //     LOGI(TAG, "%s", message);
-    // }
-
+#ifdef DEBUG
     LOG("%s", message);
-    // LOGI(TAG, "Free Heap Size: %d", xPortGetFreeHeapSize());
+// LOGI(TAG, "Free Heap Size: %d", xPortGetFreeHeapSize());
+#endif
     return 0;
 }
 
@@ -213,14 +226,6 @@ static int32_t aliyun_mqtt_start(void **handle, char *product_key, char *device_
 
     /* 配置连接的服务器地址 */
     snprintf(host, 100, "%s", MQTT_HOST);
-#if 0
-#if (ALIYUN_VERSION == ALIYUN_VERSION_V1)
-    snprintf(host, 100, "%s.%s", PRODUCT_KEY, MQTT_HOST);
-#elif (ALIYUN_VERSION == ALIYUN_VERSION_V2)
-    snprintf(host, 100, "%s", MQTT_HOST);
-#endif
-#endif
-
     aiot_mqtt_setopt(mqtt_handle, AIOT_MQTTOPT_HOST, (void *)host);
     /* 配置MQTT服务器端口 */
     aiot_mqtt_setopt(mqtt_handle, AIOT_MQTTOPT_PORT, (void *)&port);
@@ -529,9 +534,7 @@ int32_t aliyun_iot_send(general_message_t *msg)
     if (mqtt_handle == NULL || msg == NULL) {
         return -1;
     }
-#if 1
     handle_aliyun_message((void *)mqtt_handle, msg);
-#endif
     return 0;
 }
 

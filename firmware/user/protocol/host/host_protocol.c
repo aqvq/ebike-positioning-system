@@ -1,3 +1,13 @@
+/*
+ * @Author: 橘崽崽啊 2505940811@qq.com
+ * @Date: 2023-09-21 12:21:15
+ * @LastEditors: 橘崽崽啊 2505940811@qq.com
+ * @LastEditTime: 2023-09-22 18:47:37
+ * @FilePath: \firmware\user\protocol\host\host_protocol.c
+ * @Description: 实现host协议功能
+ * 
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved. 
+ */
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -30,7 +40,7 @@ void host_protocol_task(void *pvParameters)
     }
 
     // 订阅GNSS消息
-    subscribe_gnss_nmea_data(host_message_queue);
+    subscribe_gnss_data(host_message_queue);
 
     general_message_t *general_message;
     for (;;) {
@@ -39,6 +49,7 @@ void host_protocol_task(void *pvParameters)
             continue;
         }
 
+        // 从消息队列取出一条数据
         if (xQueueReceive(host_message_queue, (void *)&general_message, portMAX_DELAY) == pdPASS) {
             //  发送数据
             if (handle_host_message(general_message) != 0) {

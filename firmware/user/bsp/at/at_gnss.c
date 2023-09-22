@@ -1,3 +1,13 @@
+/*
+ * @Author: 橘崽崽啊 2505940811@qq.com
+ * @Date: 2023-09-21 12:21:15
+ * @LastEditors: 橘崽崽啊 2505940811@qq.com
+ * @LastEditTime: 2023-09-22 14:56:19
+ * @FilePath: \firmware\user\bsp\at\at_gnss.c
+ * @Description: at gnss命令文件
+ * 
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved. 
+ */
 #include "at.h"
 
 #define TAG "AT_GNSS"
@@ -49,11 +59,15 @@ at_rsp_result_t gnss_rsp_handler(char *rsp)
     return AT_RSP_SUCCESS;
 }
 
-/*
-+QGPS: 1
-
-OK
-*/
+/**
+ * @brief GNSS AT STATE 响应处理
+ *
+ * @param rsp at响应字符串。正常情况下，收到的回复格式如下
+ * +QGPS: 1
+ * 
+ * OK
+ * @return at_rsp_result_t
+ */
 static at_rsp_result_t gnss_state_rsp_handler(char *rsp)
 {
     if (rsp != NULL) {
@@ -65,11 +79,7 @@ static at_rsp_result_t gnss_state_rsp_handler(char *rsp)
     return AT_RSP_SUCCESS;
 }
 
-/**
- * @brief GNSS是否打开
- * @param state < 0 GNSS关闭或者异常, >=0 GNSS打开
- * @return int32_t
- */
+
 int32_t ec800m_at_gnss_state(uint8_t *state)
 {
 #define gnss_state_cmd "AT+QGPS?\r\n"
@@ -97,11 +107,7 @@ int32_t ec800m_at_gnss_state(uint8_t *state)
     return res;
 }
 
-/**
- * @brief 打开 GNSS
- *
- * @return int32_t < 0 操作失败, >=0 操作成功,返回已经消费掉的数据
- */
+
 int32_t ec800m_at_gnss_open()
 {
 #define gnss_open_cmd "AT+QGPS=1\r\n"
@@ -125,11 +131,7 @@ int32_t ec800m_at_gnss_open()
     return res;
 }
 
-/**
- * @brief 关闭 GNSS
- *
- * @return int32_t
- */
+
 int32_t ec800m_at_gnss_close()
 {
 #define gnss_close_cmd "AT+QGPSEND\r\n"
@@ -152,11 +154,7 @@ int32_t ec800m_at_gnss_close()
     return res;
 }
 
-/**
- * @brief GNSS 定位
- *
- * @return int32_t
- */
+
 int32_t ec800m_at_gnss_location()
 {
 /* 查询场景激活的命令 */
@@ -182,18 +180,7 @@ int32_t ec800m_at_gnss_location()
     return res;
 }
 
-/**
- * @brief GNSS 定位设置
- * @param mode
- * 0 GPS
- * 1 GPS + BeiDou
- * 3 GPS + GLONASS + Galileo
- * 4 GPS + GLONASS
- * 5 GPS + BeiDou + Galileo
- * 6 GPS + Galileo
- * 7 BeiDou
- * @return int32_t
- */
+
 int32_t ec800m_at_gnss_config(uint8_t mode)
 {
     /* 配置支持的 GNSS 卫星导航系统 */

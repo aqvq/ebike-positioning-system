@@ -1,3 +1,13 @@
+/*
+ * @Author: 橘崽崽啊 2505940811@qq.com
+ * @Date: 2023-09-21 12:21:15
+ * @LastEditors: 橘崽崽啊 2505940811@qq.com
+ * @LastEditTime: 2023-09-21 22:45:49
+ * @FilePath: \firmware\user\aliyun\aliyun_ntp.h
+ * @Description: 阿里云NTP头文件
+ * 
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved. 
+ */
 
 #ifndef _ALIYUN_NTP_H_
 #define _ALIYUN_NTP_H_

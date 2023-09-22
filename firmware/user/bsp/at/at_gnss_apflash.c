@@ -1,13 +1,18 @@
+/*
+ * @Author: 橘崽崽啊 2505940811@qq.com
+ * @Date: 2023-09-21 12:21:15
+ * @LastEditors: 橘崽崽啊 2505940811@qq.com
+ * @LastEditTime: 2023-09-22 14:50:34
+ * @FilePath: \firmware\user\bsp\at\at_gnss_apflash.c
+ * @Description: at gnss apflash命令文件
+ * 
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved. 
+ */
 #include "at.h"
 #define TAG "AT_GNSS_APFLASH"
 
 static uint8_t gnss_apflash_state;
 
-/**
- * @brief 启用/禁用 AP-Flash 快速热启动功能
- *
- * @return int32_t
- */
 int32_t ec800m_at_gnss_enable_apflash()
 {
 #define gnss_apflash_open_cmd "AT+QGPSCFG=\"apflash\",1\r\n"
@@ -30,11 +35,6 @@ int32_t ec800m_at_gnss_enable_apflash()
     return res;
 }
 
-/**
- * @brief 启用/禁用 AP-Flash 快速热启动功能
- *
- * @return int32_t
- */
 int32_t ec800m_at_gnss_disable_apflash()
 {
 #define gnss_apflash_close_cmd "AT+QGPSCFG=\"apflash\",0\r\n"
@@ -58,6 +58,7 @@ int32_t ec800m_at_gnss_disable_apflash()
 }
 
 /*
+正常情况下，收到的回复格式如下
 +QGPSCFG: "apflash",1
 
 OK
@@ -74,11 +75,6 @@ static at_rsp_result_t gnss_apflash_state_rsp_handler(char *rsp)
     return AT_RSP_SUCCESS;
 }
 
-/**
- * @brief apflash是否打开
- * @param state =0 apflash关闭或者异常, =1 apflash打开
- * @return int32_t
- */
 int32_t ec800m_at_gnss_apflash_state(uint8_t *state)
 {
 #define gnss_apflash_state_cmd "AT+QGPSCFG=\"apflash\"\r\n"

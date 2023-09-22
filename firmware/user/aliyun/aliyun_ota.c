@@ -1,3 +1,13 @@
+/*
+ * @Author: 橘崽崽啊 2505940811@qq.com
+ * @Date: 2023-09-21 12:21:15
+ * @LastEditors: 橘崽崽啊 2505940811@qq.com
+ * @LastEditTime: 2023-09-21 22:50:45
+ * @FilePath: \firmware\user\aliyun\aliyun_ota.c
+ * @Description: 阿里云OTA服务
+ * 
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved. 
+ */
 
 #include "aiot_mqtt_api.h"
 #include "aiot_at_api.h"
@@ -31,26 +41,34 @@ extern void ec800m_poweroff_and_mcu_restart(void);
 
 /* OTA升级标志，定义在main.c中 */
 extern uint8_t g_app_upgrade_flag;
+/* mqtt句柄 */
 extern void *mqtt_handle;
 // mqtt_download实例，不为NULL表示当前有OTA任务
 void *g_dl_handle = NULL;
-
+// ota句柄
 static void *ota_handle               = NULL;
+// ota获取的固件版本(first)
 static uint16_t ota_version_first_no  = 0;
+// ota获取的固件版本(second)
 static uint16_t ota_version_second_no = 0;
+// ota获取的固件版本(third)
 static uint16_t ota_version_third_no  = 0;
+// ota获取的固件大小
 static uint32_t ota_app_size          = 0;
 
+// ota重启MCU
 static void ota_mcu_restart(void)
 {
     ec800m_poweroff_and_mcu_restart();
 }
 
+// ota任务
 static void aliyun_ota_task(void *pvParameters);
+// 上报版本
 static void report_version(char *version);
 
 /* 下载收包回调, 用户调用 aiot_download_recv() 后, SDK收到数据会进入这个函数, 把下载到的数据交给用户 */
-/* TODO: 一般来说, 设备升级时, 会在这个回调中, 把下载到的数据写到Flash上 */
+/* 一般来说, 设备升级时, 会在这个回调中, 把下载到的数据写到Flash上 */
 void user_download_recv_handler(void *handle, const aiot_mqtt_download_recv_t *packet, void *userdata)
 {
     /* 目前只支持 packet->type 为 AIOT_DLRECV_HTTPBODY 的情况 */
@@ -102,17 +120,6 @@ static void user_ota_recv_handler(void *ota_handle, aiot_ota_recv_t *ota_msg, vo
             ota_app_size = ota_msg->task_desc->size_total;
             LOGW(TAG, "==== OTA target firmware version: %d.%d.%d, size: %u Bytes ====\r\n", ota_version_first_no, ota_version_second_no, ota_version_third_no, ota_msg->task_desc->size_total);
 
-#if 0
-        // OTA版本小于当前运行的版本，则不执行OTA升级
-        if ((ota_version_first_no < cur_version_first_no) ||
-            (ota_version_first_no == cur_version_first_no && ota_version_second_no < cur_version_second_no) ||
-            (ota_version_first_no == cur_version_first_no && ota_version_second_no == cur_version_second_no && ota_version_third_no <= cur_version_third_no))
-        {
-            LOGW(TAG, "the version is unreasonable");
-            iap_deinit();
-            break;
-        }
-#endif
             // 开始OTA
             LOGD(TAG, "begin ota");
             err = iap_init();

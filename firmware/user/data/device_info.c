@@ -1,3 +1,13 @@
+/*
+ * @Author: 橘崽崽啊 2505940811@qq.com
+ * @Date: 2023-09-21 12:21:15
+ * @LastEditors: 橘崽崽啊 2505940811@qq.com
+ * @LastEditTime: 2023-09-22 17:18:41
+ * @FilePath: \firmware\user\data\device_info.c
+ * @Description: 设备信息数据结构读写操作实现
+ * 
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved. 
+ */
 #include "device_info.h"
 #include "storage/storage.h"
 #include "cJSON.h"

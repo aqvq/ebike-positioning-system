@@ -1,3 +1,13 @@
+/*
+ * @Author: 橘崽崽啊 2505940811@qq.com
+ * @Date: 2023-09-21 12:21:15
+ * @LastEditors: 橘崽崽啊 2505940811@qq.com
+ * @LastEditTime: 2023-09-21 22:38:44
+ * @FilePath: \firmware\user\aliyun\aliyun_dynreg.c
+ * @Description: 本文件实现阿里云动态注册功能
+ *
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved.
+ */
 
 #include <stdio.h>
 #include <string.h>
@@ -13,28 +23,8 @@
 #include "FreeRTOS.h"
 #include "data/device_info.h"
 #include "common/error_type.h"
-#include "data/device_info.h"
 
-#define TAG  "DYN_REG"
-
-/* 如果要免预注册, 需要将该值设置为1; 如果需要在控制台预先注册设备, 置为0 */
-const uint8_t skip_pre_regist = 0;
-
-#if (ALIYUN_VERSION == ALIYUN_VERSION_V1)
-static const char nvs_namespce[]       = "device_info";
-static const char device_name_key[]    = "device_name";
-static const char device_secret_key[]  = "device_secret";
-static const char conn_client_id_key[] = "conn_clientid";
-static const char conn_username_key[]  = "conn_username";
-static const char conn_password_key[]  = "conn_password";
-#elif (ALIYUN_VERSION == ALIYUN_VERSION_V2)
-static const char nvs_namespce[]       = "dynreg_v2";
-static const char device_name_key[]    = "device_name";
-static const char device_secret_key[]  = "device_secret";
-static const char conn_client_id_key[] = "conn_clientid";
-static const char conn_username_key[]  = "conn_username";
-static const char conn_password_key[]  = "conn_password";
-#endif
+#define TAG "DYN_REG"
 
 /* 位于portfiles/aiot_port文件夹下的系统适配函数集合 */
 extern aiot_sysdep_portfile_t g_aiot_sysdep_portfile;
@@ -45,94 +35,6 @@ extern const char *ali_ca_cert;
 /* 用户保存白名单模式动态注册, 服务器返回的deviceSecret */
 static devinfo_wl_t devinfo_wl = {0};
 
-/* 用户保存免白名单模式动态注册, 服务器返回的mqtt建连信息 */
-#if 0
-static devinfo_nwl_t devinfo_nwl;
-#endif
-#if 0
-/**
- * @brief 写入设备注册信息到flash
- *
- * @return int8_t < 0: 保存失败, 否则保存成功
- */
-int8_t write_device_info()
-{
-    uint8_t err = 0;
-
-    if (skip_pre_regist == 0) {
-        LOGD(TAG, "devinfo_wl.device_name (size: %d): %s\n", strlen(devinfo_wl.device_name), devinfo_wl.device_name);
-        err |= storage_write_data(storage_addr_device_name_key, devinfo_wl.device_name, 16);
-
-        LOGD(TAG, "devinfo_wl.device_secret (size: %d): %s\n", strlen(devinfo_wl.device_secret), devinfo_wl.device_secret);
-        err |= storage_write_data(storage_addr_device_secret_key, devinfo_wl.device_secret, 64);
-
-    } else if (skip_pre_regist == 1) {
-        LOGD(TAG, "devinfo_nwl.conn_clientid (size: %d): %s\n", strlen(devinfo_nwl.conn_clientid), devinfo_nwl.conn_clientid);
-        err |= storage_write_data(storage_addr_conn_client_id_key, devinfo_nwl.conn_clientid, strlen(devinfo_nwl.conn_clientid));
-
-        LOGD(TAG, "devinfo_nwl.conn_username (size: %d): %s\n", strlen(devinfo_nwl.conn_username), devinfo_nwl.conn_username);
-        err |= storage_write_data(storage_addr_conn_username_key, devinfo_nwl.conn_username, strlen(devinfo_nwl.conn_username));
-
-        LOGD(TAG, "devinfo_nwl.conn_password (size: %d): %s\n", strlen(devinfo_nwl.conn_password), devinfo_nwl.conn_password);
-        err |= storage_write_data(storage_addr_conn_password_key, devinfo_nwl.conn_password, strlen(devinfo_nwl.conn_password));
-    }
-
-    if (err == 0) {
-        LOGD(TAG, "write device info success");
-        return 0;
-    }
-
-    return -1;
-}
-
-int8_t read_device_info()
-{
-    size_t len  = 0;
-    uint8_t err = 0;
-
-    if (skip_pre_regist == 0) {
-        len = 16;
-        err |= storage_read_data(storage_addr_device_name_key, devinfo_wl.device_name, len);
-        LOGD(TAG, "devinfo_wl.device_name (size: %d): %s\n", strlen(devinfo_wl.device_name), devinfo_wl.device_name);
-        if (devinfo_wl.device_name[0] == 0 || devinfo_wl.device_name[0] == 0xFF) {
-            return -1;
-        }
-        len = 64;
-        err |= storage_read_data(storage_addr_device_secret_key, devinfo_wl.device_secret, len);
-        LOGD(TAG, "devinfo_wl.device_secret (size: %d): %s\n", strlen(devinfo_wl.device_secret), devinfo_wl.device_secret);
-        if (devinfo_wl.device_secret[0] == 0 || devinfo_wl.device_secret[0] == 0xFF) {
-            return -1;
-        }
-
-    } else if (skip_pre_regist == 1) {
-        err |= storage_read_data(storage_addr_conn_client_id_key, devinfo_nwl.conn_clientid, len);
-        LOGD(TAG, "devinfo_nwl.conn_clientid (size: %d): %s\n", strlen(devinfo_nwl.conn_clientid), devinfo_nwl.conn_clientid);
-        if (devinfo_nwl.conn_clientid[0] == 0 || devinfo_nwl.conn_clientid[0] == 0xFF) {
-            return -1;
-        }
-
-        err |= storage_read_data(storage_addr_conn_username_key, devinfo_nwl.conn_username, len);
-        LOGD(TAG, "devinfo_nwl.conn_username (size: %d): %s\n", strlen(devinfo_nwl.conn_username), devinfo_nwl.conn_username);
-        if (devinfo_nwl.conn_username[0] == 0 || devinfo_nwl.conn_username[0] == 0xFF) {
-            return -1;
-        }
-
-        err |= storage_read_data(storage_addr_conn_password_key, devinfo_nwl.conn_password, len);
-        LOGD(TAG, "devinfo_nwl.conn_password (size: %d): %s\n", strlen(devinfo_nwl.conn_password), devinfo_nwl.conn_password);
-        if (devinfo_nwl.conn_password[0] == 0 || devinfo_nwl.conn_password[0] == 0xFF) {
-            return -1;
-        }
-    }
-
-    if (err == 0) {
-        LOGD(TAG, "read device info success\n");
-        return 0;
-    }
-
-    return -2;
-}
-#endif
-
 uint8_t is_registered()
 {
     devinfo_wl_t device;
@@ -140,15 +42,6 @@ uint8_t is_registered()
         return device.device_secret[0] != 0 && device.device_secret[0] != 0xFF;
     else
         return 0;
-}
-
-char *get_device_secret()
-{
-    devinfo_wl_t device;
-    if (read_device_info(&device) == 0)
-        return devinfo_wl.device_secret;
-    else
-        return NULL;
 }
 
 /* TODO: 如果要关闭日志, 就把这个函数实现为空, 如果要减少日志, 可根据code选择不打印
@@ -161,8 +54,10 @@ char *get_device_secret()
 /* 日志回调函数, SDK的日志会从这里输出 */
 static int32_t state_logcb(int32_t code, char *message)
 {
+#ifdef DEBUG
     LOGD(TAG, "%s", message);
     LOGD(TAG, "Free heap size: %d", xPortGetFreeHeapSize());
+#endif
     return 0;
 }
 
@@ -183,26 +78,6 @@ void dynreg_mq_recv_handler(void *handle, const aiot_dynregmq_recv_t *packet, vo
             strcpy(devinfo_wl.device_name, get_device_name());
             write_device_info(&devinfo_wl);
         } break;
-/* TODO: 回调中需要将packet指向的空间内容复制保存好, 因为回调返回后, 这些空间就会被SDK释放 */
-#if 0
-        case AIOT_DYNREGMQRECV_DEVICEINFO_NWL: {
-            if (strlen(packet->data.deviceinfo_nwl.clientid) >= sizeof(devinfo_nwl.conn_clientid) ||
-                strlen(packet->data.deviceinfo_nwl.username) >= sizeof(devinfo_nwl.conn_username) ||
-                strlen(packet->data.deviceinfo_nwl.password) >= sizeof(devinfo_nwl.conn_password)) {
-                break;
-            }
-
-            /* 免白名单模式, 用户务必要对MQTT的建连信息clientid, conn_username和conn_password进行持久化保存 */
-            memset(&devinfo_nwl, 0, sizeof(devinfo_nwl_t));
-            memcpy(devinfo_nwl.conn_clientid, packet->data.deviceinfo_nwl.clientid,
-                   strlen(packet->data.deviceinfo_nwl.clientid));
-            memcpy(devinfo_nwl.conn_username, packet->data.deviceinfo_nwl.username,
-                   strlen(packet->data.deviceinfo_nwl.username));
-            memcpy(devinfo_nwl.conn_password, packet->data.deviceinfo_nwl.password,
-                   strlen(packet->data.deviceinfo_nwl.password));
-            write_device_info();
-        } break;
-#endif
         default: {
         } break;
     }
@@ -243,14 +118,6 @@ int8_t dynamic_register()
 
     /* 配置连接的服务器地址 */
     snprintf(host, 100, "%s", MQTT_HOST);
-#if 0
-#if (ALIYUN_VERSION == ALIYUN_VERSION_V1)
-    snprintf(host, 100, "%s.%s", PRODUCT_KEY, MQTT_HOST);
-#elif (ALIYUN_VERSION == ALIYUN_VERSION_V2)
-    snprintf(host, 100, "%s", MQTT_HOST);
-#endif
-#endif
-
     res = aiot_dynregmq_setopt(dynregmq_handle, AIOT_DYNREGMQOPT_HOST, (void *)host);
     if (res < STATE_SUCCESS) {
         LOGE(TAG, "aiot_dynregmq_setopt AIOT_DYNREGMQOPT_HOST failed, res: -0x%04X", -res);
@@ -315,7 +182,8 @@ int8_t dynamic_register()
        aiot_mqtt_setopt接口以AIOT_MQTTOPT_CLIENTID, AIOT_MQTTOPT_USERNAME, AIOT_MQTTOPT_PASSWORD配置选项
        配置到MQTT句柄中。
     */
-    res = aiot_dynregmq_setopt(dynregmq_handle, AIOT_DYNREGMQOPT_NO_WHITELIST, (void *)&skip_pre_regist);
+    uint8_t skip_pre_regist = 0;
+    res                     = aiot_dynregmq_setopt(dynregmq_handle, AIOT_DYNREGMQOPT_NO_WHITELIST, (void *)&skip_pre_regist);
     if (res < STATE_SUCCESS) {
         LOGE(TAG, "aiot_dynregmq_setopt AIOT_DYNREGMQOPT_NO_WHITELIST failed, res: -0x%04X", -res);
         aiot_dynregmq_deinit(&dynregmq_handle);
@@ -345,12 +213,6 @@ int8_t dynamic_register()
     /* 把服务应答中的信息打印出来 */
     if (skip_pre_regist == 0) {
         LOGI(TAG, "device secret: %s", devinfo_wl.device_secret);
-    } else {
-#if 0
-        LOGI(TAG, "clientid: %s", devinfo_nwl.conn_clientid);
-        LOGI(TAG, "conn_username: %s", devinfo_nwl.conn_username);
-        LOGI(TAG, "conn_password: %s", devinfo_nwl.conn_password);
-#endif
     }
 
     /* 销毁动态注册会话实例 */

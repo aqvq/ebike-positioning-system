@@ -1,3 +1,13 @@
+/*
+ * @Author: 橘崽崽啊 2505940811@qq.com
+ * @Date: 2023-09-21 12:21:15
+ * @LastEditors: 橘崽崽啊 2505940811@qq.com
+ * @LastEditTime: 2023-09-22 15:56:16
+ * @FilePath: \firmware\user\bsp\flash\flash.c
+ * @Description: stm32 flash驱动代码
+ *
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved.
+ */
 
 #include "flash.h"
 #include "log/log.h"
@@ -13,6 +23,7 @@ uint32_t flash_read(uint32_t addr, uint8_t *buffer, uint32_t length)
     return (addr + length);
 }
 
+// flash获取空闲bank
 static uint8_t flash_get_alternate_bank(void)
 {
     return (boot_get_current_bank() == 0 ? 1 : 0);
@@ -26,6 +37,7 @@ error_t flash_erase_alternate_bank(void)
     flash_erase_init.TypeErase = FLASH_TYPEERASE_MASS;
     flash_erase_init.Page      = 0;
     flash_erase_init.NbPages   = FLASH_PAGE_NB;
+    // 擦除数据前要先解锁
     HAL_FLASH_Unlock();
     HAL_StatusTypeDef ret = HAL_FLASHEx_Erase(&flash_erase_init, &PageError);
     HAL_FLASH_Lock();
@@ -70,6 +82,7 @@ static error_t flash_write_fast(uint32_t addr, uint8_t *buffer)
 uint32_t flash_write(uint32_t addr, uint8_t *buffer, uint32_t length)
 {
     error_t err = OK;
+    // 写入数据前要先解锁
     HAL_FLASH_Unlock(); // 解锁
 
     while (length > 0) {

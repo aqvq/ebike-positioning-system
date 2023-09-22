@@ -1,13 +1,18 @@
+/*
+ * @Author: 橘崽崽啊 2505940811@qq.com
+ * @Date: 2023-09-21 12:21:15
+ * @LastEditors: 橘崽崽啊 2505940811@qq.com
+ * @LastEditTime: 2023-09-22 14:51:59
+ * @FilePath: \firmware\user\bsp\at\at_gnss_autogps.c
+ * @Description: at gnss autogps命令文件
+ * 
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved. 
+ */
 #include "at.h"
 #define TAG "AT_GNSS_AUTOGPS"
 
 static uint8_t gnss_autogps_state;
 
-/**
- * @brief 启用/禁用 GNSS 自启动
- *
- * @return int32_t0
- */
 int32_t ec800m_at_gnss_enable_autogps()
 {
 #define gnss_autogps_open_cmd "AT+QGPSCFG=\"autogps\",1\r\n"
@@ -30,11 +35,6 @@ int32_t ec800m_at_gnss_enable_autogps()
     return res;
 }
 
-/**
- * @brief 启用/禁用 GNSS 自启动
- *
- * @return int32_t
- */
 int32_t ec800m_at_gnss_disable_autogps()
 {
 #define gnss_autogps_close_cmd "AT+QGPSCFG=\"autogps\",0\r\n"
@@ -57,6 +57,7 @@ int32_t ec800m_at_gnss_disable_autogps()
     return res;
 }
 /*
+正常情况下，收到的回复格式如下
 +QGPSCFG: "autogps",1
 
 OK
@@ -73,11 +74,6 @@ static at_rsp_result_t gnss_autogps_state_rsp_handler(char *rsp)
     return AT_RSP_SUCCESS;
 }
 
-/**
- * @brief autogps是否打开
- * @param state =0 autogps关闭或者异常, =1 autogps打开
- * @return int32_t
- */
 int32_t ec800m_at_gnss_autogps_state(uint8_t *state)
 {
 #define gnss_autogps_state_cmd "AT+QGPSCFG=\"autogps\"\r\n"

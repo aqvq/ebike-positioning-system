@@ -1,3 +1,13 @@
+/*
+ * @Author: 橘崽崽啊 2505940811@qq.com
+ * @Date: 2023-09-21 12:21:15
+ * @LastEditors: 橘崽崽啊 2505940811@qq.com
+ * @LastEditTime: 2023-09-22 18:34:46
+ * @FilePath: \firmware\user\gnss\gnss.c
+ * @Description: gnss功能实现
+ *
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved.
+ */
 
 #include <string.h>
 #include "FreeRTOS.h"
@@ -5,7 +15,6 @@
 #include "aiot_at_api.h"
 #include "bsp/at/at.h"
 #include "aiot_state_api.h"
-#include "utils/linked_list.h"
 #include "log/log.h"
 #include "utils/util.h"
 #include "aiot_mqtt_api.h"
@@ -18,35 +27,48 @@
 #include "bsp/at/at.h"
 #include "data/gnss_settings.h"
 
-//-------------------------------------全局变量-------------------------------------------------------------
-#define GPS_DATA      (1)
+#define TAG "GNSS"
+
+//---------------------------------------宏定义-------------------------------------------------------------
+
+// 上传字符串数据，解析交由服务器处理
+#define GPS_DATA (1)
+// 上传结构体数据，在设备端解析
 #define GPS_NMEA_DATA (2)
+// 上传的GPS数据类型
 #define GPS_DATA_TYPE GPS_DATA
 
 //-------------------------------------全局变量-------------------------------------------------------------
-extern linked_list_t *gnss_response_list;
 
-#define TAG "GNSS"
-
-// 定位字符串，quectel_ec800ms_tcp.c
+// 定位字符串，被"bsp/at/at_gnss"引用
 char gnss_string[128];
-
-// 全局变量，记录gnss数据
+// 全局变量，记录gnss nema数据
 static gnss_nmea_data_t _gnss_nmea_data;
-
-/* OTA升级标志，定义在main.c中 */
+// OTA升级标志，定义在main.c中
 extern uint8_t g_app_upgrade_flag;
 
-//------------------------------- 订阅相关的参数 ---------------------------------------------------------
-#define MAX_SUBSCRIBER_COUNT (10)                       // 订阅队列的上限
-static uint8_t subscriber_count;                        // 订阅数量
-static QueueHandle_t subscribers[MAX_SUBSCRIBER_COUNT]; // 订阅用于存储数据的队列句柄
+//----------------------------------- 订阅相关的参数 -------------------------------------------------------
 
-//------------------------------- 局部变量 --------------------------------------------------------------
+// 订阅队列的上限
+#define MAX_SUBSCRIBER_COUNT (10)
+// 订阅数量
+static uint8_t subscriber_count;
+// 订阅用于存储数据的队列句柄
+static QueueHandle_t subscribers[MAX_SUBSCRIBER_COUNT];
+
+//---------------------------------- 局部变量 --------------------------------------------------------------
+
+// gnss定位516错误计数
 uint32_t gnss_error_516_num = 0;
-uint32_t gnss_error_50_num  = 0;
+// gnss定位50错误计数
+uint32_t gnss_error_50_num = 0;
 
-int8_t subscribe_gnss_nmea_data(QueueHandle_t subscriber_queue)
+//---------------------------------- 函数定义 --------------------------------------------------------------
+
+/// @brief 订阅gnss数据，订阅者将会不断收到gnss数据
+/// @param subscriber_queue 订阅者接收数据的队列
+/// @return int8_t
+int8_t subscribe_gnss_data(QueueHandle_t subscriber_queue)
 {
     if (subscriber_count >= MAX_SUBSCRIBER_COUNT) {
         return -1;
@@ -56,6 +78,9 @@ int8_t subscribe_gnss_nmea_data(QueueHandle_t subscriber_queue)
     return 0;
 }
 
+/// @brief 将接收到的gnss nema字符串数据转换为结构体数据，暂未使用
+/// @param line 字符串数据
+/// @return int8_t
 static int8_t translate_gnss_data(const char *line)
 {
     switch (minmea_sentence_id(line, false)) {
@@ -260,8 +285,12 @@ static int8_t translate_gnss_data(const char *line)
     // }
 }
 
+/// @brief gnss nema回调函数
+/// @param rsp 接收到的字符串数据
+/// @return at_rsp_result_t
 at_rsp_result_t gnss_nmea_rsp_handler(char *rsp)
 {
+    // TODO: 函数实现过于繁琐，现阶段未使用，故暂不修改
     if (!strstr(rsp, "ERROR")) {
         char *str1   = strstr(rsp, "+QGPSGNMEA");
         uint8_t flag = 0;
@@ -490,6 +519,8 @@ static void general_message_to_queue(void)
 #endif
 
 #if GPS_DATA_TYPE == GPS_DATA
+
+// gnss数据结构
 typedef struct gnss_data {
     char UTC[20];
     char latitude[20];
@@ -504,12 +535,16 @@ typedef struct gnss_data {
     char nsat[10];
 } gnss_data_t;
 
+/// @brief 解析gnss字符串
+/// @param data gnss字符串数据
+/// @return int8_t
 static int8_t parse_gnss_string(gnss_data_t *data)
 {
     if (!data) {
         return -1;
     }
 
+    // 参考示例：
     // +QGPSLOC: 074839.000,3145.8432N,11716.0268E,1.1,76.3,3,000.00,0.0,0.0,121222,20
     // +QGPSLOC: <UTC>,<latitude>,<longitude>,<HDOP>,<altitude>,<fix>,<COG>,<spkm>,<spkn>,<date>,<nsat>
     // <UTC> 字符串类型。UTC时间。格式：hhmmss.sss（引自GPGGA语句）。
@@ -559,10 +594,14 @@ static int8_t parse_gnss_string(gnss_data_t *data)
 }
 #endif
 
-#define GNSS_INTERVAL_TIME              (3000)          /* GPS定位时间间隔,单位:ms */
-#define GNSS_ERROR_50_CONTINUE_TIME_MAX (3 * 60 * 1000) /* 允许错误50持续的最大时长,单位:ms */
-#define SPEED_NUM                       (100)           /* 连续采集GPS速度个数 */
-float g_gnss_speed_mean = 0;                            /* 速度平均值 */
+/* GPS定位时间间隔,单位:ms */
+#define GNSS_INTERVAL_TIME (3000)
+/* 允许错误50持续的最大时长,单位:ms */
+#define GNSS_ERROR_50_CONTINUE_TIME_MAX (3 * 60 * 1000)
+/* 连续采集GPS速度个数 */
+#define SPEED_NUM (100)
+/* 速度平均值 */
+float g_gnss_speed_mean = 0;
 
 /*******************************************************************
  * 向物联网平台发送GPS数据的策略
@@ -574,6 +613,8 @@ float g_gnss_speed_mean = 0;                            /* 速度平均值 */
 #define SEND_IOT_GPS_M (200)
 #define SEND_IOT_GPS_T (0)
 
+/// @brief gnss任务
+/// @param pvParameters 未使用可忽略
 void gnss_task(void *pvParameters)
 {
 #if GPS_DATA_TYPE == GPS_DATA
@@ -588,6 +629,7 @@ void gnss_task(void *pvParameters)
 #endif
 
     for (;;) {
+        // 当执行升级任务时退避
         if (g_app_upgrade_flag) {
             vTaskDelay(pdMS_TO_TICKS(500));
             continue;
@@ -699,6 +741,7 @@ void gnss_task(void *pvParameters)
     vTaskDelete(NULL);
 }
 
+/// @brief gnss初始化
 void gnss_init(void)
 {
     // while (at_handle.is_init != 1)
@@ -706,6 +749,7 @@ void gnss_init(void)
 
     uint8_t retry = GNSS_MAX_RETRY;
 
+    // 读取gnss配置信息
     gnss_settings_t config = {0};
     error_t err            = read_gnss_settings(&config);
     if (err != OK) {
@@ -726,12 +770,13 @@ void gnss_init(void)
         static uint8_t gnss_state;
         int32_t res = STATE_SUCCESS;
 
-        // 1. AGPS 重启生效
+        // 1. 设置AGPS 重启生效
         static uint8_t agps_state = 0;
         res                       = ec800m_at_gnss_agps_state(&agps_state);
+        // 如果当前状态不符合设定的状态
         if (res == STATE_SUCCESS && ((config.gnss_mode & GNSS_AGPS_MSK) >> GNSS_AGPS_SHIFT) != agps_state) {
             if (agps_state == 0) {
-                // AGPS处于关闭状态
+                // AGPS处于关闭状态，打开AGPS
                 res = ec800m_at_gnss_enable_agps();
                 if (res < 0) {
                     LOGE(TAG, "open agps failed, error code: %d", res);
@@ -741,7 +786,7 @@ void gnss_init(void)
                     LOGI(TAG, "open agps success.");
                 }
             } else {
-                // AGPS处于打开状态
+                // AGPS处于打开状态，关闭AGPS
                 res = ec800m_at_gnss_disable_agps();
                 if (res < 0) {
                     LOGE(TAG, "close agps failed, error code: %d", res);
@@ -753,9 +798,10 @@ void gnss_init(void)
             }
         }
 
-        // 2. AUTOGPS 重启生效
+        // 2. 设置AUTOGPS 重启生效
         static uint8_t autogps_state = 0;
         res                          = ec800m_at_gnss_autogps_state(&autogps_state);
+        // 如果当前状态不符合设定的状态
         if (res == STATE_SUCCESS && autogps_state != ((config.gnss_mode & GNSS_AUTOGPS_MSK) >> GNSS_AUTOGPS_SHIFT)) {
             if (autogps_state == 0) {
                 // 打开autogps，重启生效
@@ -780,9 +826,10 @@ void gnss_init(void)
             }
         }
 
-        // 3. APFLASH 立即生效
+        // 3. 设置APFLASH 立即生效
         static uint8_t apflash_state = 0;
         res                          = ec800m_at_gnss_apflash_state(&apflash_state);
+        // 如果当前状态不符合设定的状态
         if (res == STATE_SUCCESS && apflash_state != ((config.gnss_mode & GNSS_APFLASH_MSK) >> GNSS_APFLASH_SHIFT)) {
             if (apflash_state == 0) {
                 // 打开APFLASH，立即生效

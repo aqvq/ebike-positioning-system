@@ -1,3 +1,13 @@
+/*
+ * @Author: 橘崽崽啊 2505940811@qq.com
+ * @Date: 2023-09-21 12:21:15
+ * @LastEditors: 橘崽崽啊 2505940811@qq.com
+ * @LastEditTime: 2023-09-21 22:32:42
+ * @FilePath: \firmware\user\aliyun\aliyun_config.h
+ * @Description: 阿里云实例配置参数：MQTT_HOST、PRODUCT_KEY、PRODUCT_SECRET
+ * 
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved. 
+ */
 
 #ifndef _ALIYUN_CONFIG_H_
 #define _ALIYUN_CONFIG_H_
@@ -15,22 +25,9 @@
 
     详情请见: https://help.aliyun.com/document_detail/147356.html
 */
-
-#define ALIYUN_VERSION_V1 (1) /* 老的阿里云平台 */
-#define ALIYUN_VERSION_V2 (2) /* 新的阿里云平台 */
-
-#define ALIYUN_VERSION    ALIYUN_VERSION_V1
-
-#if (ALIYUN_VERSION == ALIYUN_VERSION_V1)
 #define MQTT_HOST      "iot-06z00d470n691my.mqtt.iothub.aliyuncs.com"
 #define MQTT_PORT      443
 #define PRODUCT_KEY    "j1ng3QrOeu2"
 #define PRODUCT_SECRET "Ri5VlQYRkEXJx1HK"
-#elif (ALIYUN_VERSION == ALIYUN_VERSION_V2)
-#define MQTT_HOST      "iot-06z00d470n691my.mqtt.iothub.aliyuncs.com"
-#define MQTT_PORT      1883
-#define PRODUCT_KEY    "j1ng3QrOeu2"
-#define PRODUCT_SECRET "Ri5VlQYRkEXJx1HK"
-#endif
 
 #endif // _ALIYUN_CONFIG_H_

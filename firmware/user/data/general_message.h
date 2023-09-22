@@ -1,3 +1,13 @@
+/*
+ * @Author: 橘崽崽啊 2505940811@qq.com
+ * @Date: 2023-09-21 12:21:15
+ * @LastEditors: 橘崽崽啊 2505940811@qq.com
+ * @LastEditTime: 2023-09-22 17:26:05
+ * @FilePath: \firmware\user\data\general_message.h
+ * @Description: 通用消息实现头文件
+ * 
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved. 
+ */
 #ifndef _GENERAL_MESSAGE_H_
 #define _GENERAL_MESSAGE_H_
 

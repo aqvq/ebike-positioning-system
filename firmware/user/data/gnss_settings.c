@@ -1,3 +1,13 @@
+/*
+ * @Author: 橘崽崽啊 2505940811@qq.com
+ * @Date: 2023-09-21 12:21:15
+ * @LastEditors: 橘崽崽啊 2505940811@qq.com
+ * @LastEditTime: 2023-09-22 17:26:36
+ * @FilePath: \firmware\user\data\gnss_settings.c
+ * @Description: GNSS配置信息数据结构实现
+ * 
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved. 
+ */
 #include "gnss_settings.h"
 #include "log/log.h"
 #include "common/error_type.h"
