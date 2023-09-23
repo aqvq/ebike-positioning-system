@@ -98,10 +98,9 @@ int main(void)
   MX_RTC_Init();
   MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
-    extern void app_main(void* p);
-    // app_main();
-    xTaskCreate(app_main, "main", 1024, NULL, 5, NULL);
-    vTaskStartScheduler();
+  extern void app_main(void* p);
+  xTaskCreate(app_main, "main", 2048, NULL, 5, NULL);
+  vTaskStartScheduler();
   /* USER CODE END 2 */
 
   /* Infinite loop */

@@ -2,11 +2,11 @@
  * @Author: 橘崽崽啊 2505940811@qq.com
  * @Date: 2023-09-21 12:21:15
  * @LastEditors: 橘崽崽啊 2505940811@qq.com
- * @LastEditTime: 2023-09-22 17:04:01
+ * @LastEditTime: 2023-09-23 11:28:44
  * @FilePath: \firmware\user\main\app_main.c
  * @Description: APP主函数入口
- * 
- * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved. 
+ *
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved.
  */
 #include <stdio.h>
 #include <string.h>
@@ -86,8 +86,8 @@ void cjson_init()
 void ec800m_poweroff_and_mcu_restart(void)
 {
 #if MQTT_ENABLED || GNSS_ENABLED
-    iot_disconnect();     // 断开连接
-    ec800m_at_poweroff(); // 关闭整个4G模块
+    // iot_disconnect();     // 断开连接
+    // ec800m_at_poweroff(); // 关闭整个4G模块
 #endif
     mcu_restart();
 }
@@ -108,6 +108,7 @@ error_t storage_init()
     storage_interface.storage_write_data_func = storage_default_write;
     storage_interface.storage_init_func       = NULL;
 #endif
+    // 使用eeprom做存储
     storage_interface.storage_base_address    = 0x00;
     storage_interface.storage_read_data_func  = (storage_read_data_func_t)eeprom_read;
     storage_interface.storage_write_data_func = (storage_write_data_func_t)eeprom_write;
@@ -126,14 +127,14 @@ void app_main(void *p)
     int8_t err = 0;
     // 初始化mcu
     mcu_init();
+    // 初始化设备
+    ec800m_init();
     // 初始化存储模块
     storage_init();
     // 初始化cjosn库
     cjson_init();
     // 打印开机信息
     print_welcome_message();
-    // 初始化设备
-    ec800m_init();
 
 #if UART_CONFIG_ENABLED
     xTaskCreate(uart_config_task, UART_CONFIG_TASK_NAME, UART_CONFIG_TASK_DEPTH, NULL, 3, NULL);
@@ -169,9 +170,8 @@ void app_main(void *p)
         vTaskDelay(pdMS_TO_TICKS(3000));
         LOGD(TAG, "Free heap size: %d", xPortGetFreeHeapSize());
     }
-#else
-    vTaskDelete(NULL);
 #endif
+    vTaskDelete(NULL);
 }
 
 /// @brief FreeRTOS任务栈溢出钩子函数（不需要用户调用）
@@ -187,10 +187,11 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask,
 
 // STM32 HAL看门狗结构体
 extern IWDG_HandleTypeDef hiwdg;
+
 /// @brief FreeRTOS任务空闲钩子函数（不需要用户调用）
 void vApplicationIdleHook(void)
 {
     // 在空闲任务中刷新看门狗
-    HAL_IWDG_Refresh(&hiwdg);
     // 目前看门狗刷新门限值约为32.768s
+    HAL_IWDG_Refresh(&hiwdg);
 }

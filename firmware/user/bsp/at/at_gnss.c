@@ -2,7 +2,7 @@
  * @Author: 橘崽崽啊 2505940811@qq.com
  * @Date: 2023-09-21 12:21:15
  * @LastEditors: 橘崽崽啊 2505940811@qq.com
- * @LastEditTime: 2023-09-22 14:56:19
+ * @LastEditTime: 2023-09-23 11:07:11
  * @FilePath: \firmware\user\bsp\at\at_gnss.c
  * @Description: at gnss命令文件
  * 
@@ -71,7 +71,7 @@ at_rsp_result_t gnss_rsp_handler(char *rsp)
 static at_rsp_result_t gnss_state_rsp_handler(char *rsp)
 {
     if (rsp != NULL) {
-        if (!sscanf(rsp, "%*s%hhd", &gnss_state)) {
+        if (!sscanf(rsp, "%*[^:]: %hhd", &gnss_state)) {
             LOGE(TAG, "format error (%s)", rsp);
         }
     }

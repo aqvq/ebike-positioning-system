@@ -7,7 +7,7 @@
         "output-debug-info": "enable"
     },
     "c/cpp-compiler": {
-        "optimization": "level-fast",
+        "optimization": "level-image-size",
         "language-c": "c99",
         "language-cpp": "c++11",
         "short-enums#wchar": true,

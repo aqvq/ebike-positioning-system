@@ -2,11 +2,11 @@
  * @Author: 橘崽崽啊 2505940811@qq.com
  * @Date: 2023-09-21 12:21:15
  * @LastEditors: 橘崽崽啊 2505940811@qq.com
- * @LastEditTime: 2023-09-22 14:39:06
+ * @LastEditTime: 2023-09-23 11:26:21
  * @FilePath: \firmware\user\bsp\at\hal_adapter.c
  * @Description: AT串口驱动文件
- * 
- * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved. 
+ *
+ * Copyright (c) 2023 by 橘崽崽啊 2505940811@qq.com, All Rights Reserved.
  */
 #include "main.h"
 #include <stdio.h>

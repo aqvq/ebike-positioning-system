@@ -2,7 +2,7 @@
  * @Author: 橘崽崽啊 2505940811@qq.com
  * @Date: 2023-09-21 12:21:15
  * @LastEditors: 橘崽崽啊 2505940811@qq.com
- * @LastEditTime: 2023-09-22 14:48:26
+ * @LastEditTime: 2023-09-23 11:05:41
  * @FilePath: \firmware\user\bsp\at\at_gnss_agps.c
  * @Description: at gnss agps命令
  *
@@ -24,8 +24,8 @@ static uint8_t gnss_agps_state = 0;
 static at_rsp_result_t gnss_agps_state_rsp_handler(char *rsp)
 {
     if (rsp != NULL) {
-        // %*s过滤前置字符串，%hhd获取8位数字存放到gnss_agps_state变量中
-        if (!sscanf(rsp, "%*s%hhd", &gnss_agps_state)) {
+        // %*[^:]过滤前置字符串，%hhd获取8位数字存放到gnss_agps_state变量中
+        if (!sscanf(rsp, "%*[^:]: %hhd", &gnss_agps_state)) {
             LOGE(TAG, "format error (%s)", rsp);
         }
     }

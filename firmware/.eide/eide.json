@@ -148,7 +148,8 @@
         "libList": [],
         "sourceDirList": [],
         "defineList": [
-          "STM32G0B0xx"
+          "STM32G0B0xx",
+          "DEBUG"
         ]
       }
     }

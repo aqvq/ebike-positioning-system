@@ -1,0 +1,9 @@
+received_form_iot针对SENSOR_POSITION数据进行写入操作。
+
+aliyun_mqtt_default_recv_handlerMQTT默认消息处理回调, 当SDK从服务器收到MQTT消息时, 且无对应用户回调处理时被调用，AIOT_MQTTRECV_PUB。在此处调用received_form_iot
+
+
+iot_send_task使用一个消息队列进行订阅消费。3个传感器订阅message_queue，向消息队列中发送数据，iot_send_task从消息队列中接受数据并发送出去。实际调用handle_aliyun_message
+
+
+iot_connect负责连接iot并创建iot_send_task。在连接iot过程中，向其传递了一个received_form_iot回调函数负责将收到的sensor数据写入flash。
